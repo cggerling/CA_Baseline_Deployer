@@ -3,7 +3,16 @@
     "key": "210-Internals-Windows-TokenProtection",
     "category": "Internals",
     "defaultSelected": true,
-    "customerInput": []
+    "customerInput": [
+      {
+        "name": "AutopilotEnrollmentProfiles",
+        "type": "stringList",
+        "required": true,
+        "render": "deviceFilterOrClause",
+        "attribute": "device.enrollmentProfileName",
+        "hint": "Namen der Autopilot-Enrollment-Profile des Kunden. Geräte aus diesen Profilen werden von Token Protection ausgenommen, wie im Learn-Artikel beschrieben. Der Deployer hängt daraus \"-or (device.enrollmentProfileName -eq \"\"...\"\" -or ...)\" an den Gerätefilter an. Eine leere Liste muss bewusst bestätigt werden."
+      }
+    ]
   },
   "displayName": "#210-Internals-Windows-TokenProtection",
   "state": "enabledForReportingButNotEnforced",
@@ -63,7 +72,7 @@
       "excludeDevices": [],
       "deviceFilter": {
         "mode": "exclude",
-        "rule": "(device.systemLabels -contains \"CloudPC\" -and device.trustType -eq \"AzureAD\")\n-or (device.systemLabels -contains \"AzureVirtualDesktop\" -and device.trustType -eq \"AzureAD\")\n-or (device.systemLabels -contains \"MicrosoftPowerAutomate\" -and device.trustType -eq \"AzureAD\")\n-or (device.profileType -eq \"SecureVM\" -and device.trustType -eq \"AzureAD\")\n-or ((device.enrollmentProfileName -eq \"Autpilot_EntraIDJoined\")-or(device.enrollmentProfileName -eq \"Autpilot_EntraHybridJoined\"))"
+        "rule": "(device.systemLabels -contains \"CloudPC\" -and device.trustType -eq \"AzureAD\")\n-or (device.systemLabels -contains \"AzureVirtualDesktop\" -and device.trustType -eq \"AzureAD\")\n-or (device.systemLabels -contains \"MicrosoftPowerAutomate\" -and device.trustType -eq \"AzureAD\")\n-or (device.profileType -eq \"SecureVM\" -and device.trustType -eq \"AzureAD\"){{input:AutopilotEnrollmentProfiles}}"
       }
     }
   },
