@@ -1,41 +1,44 @@
 {
-  "_hinweis": "Vorlage für eine Kunden-Config. Kopieren nach config/tenants/<kunde>.json und anpassen. Der Ordner config/tenants ist per .gitignore vom Repo ausgeschlossen.",
-
+  "_hinweis": "Vorlage für eine Kunden-Config. Kopieren nach config/tenants/<kunde>.json und anpassen. Der Ordner config/tenants ist per .gitignore vom Repo ausgeschlossen. Bleibt breakglassAccounts leer, fragt der Deployer nach vorhandenen Konten und legt sonst zwei neue an (emergency_access_01 und _02 auf der onmicrosoft.com-Domäne).",
   "tenant": {
     "tenantId": "00000000-0000-0000-0000-000000000000",
     "primaryDomain": "contoso.onmicrosoft.com",
     "deployerAppClientId": "00000000-0000-0000-0000-000000000000"
   },
-
   "naming": {
     "groupNamePattern": "SG-CA-Persona-{Persona}",
     "administrativeUnitName": "AU-CA-Persona-Restricted"
   },
-
-  "breakglassAccounts": [
-    "breakglass01@contoso.onmicrosoft.com",
-    "breakglass02@contoso.onmicrosoft.com"
-  ],
-
+  "breakglassAccounts": [],
   "policies": {
-    "include": [ "*" ],
+    "include": [
+      "*"
+    ],
     "exclude": [],
     "stateOnCreate": "enabledForReportingButNotEnforced"
   },
-
   "inputs": {
     "AutopilotEnrollmentProfiles": [],
     "namedLocations": {
-      "NL-Admins-Trusted_Networks-IP": { "ipRanges": [] },
-      "NL-ServiceAccounts-Trusted_Networks-IP": { "ipRanges": [] },
-      "NL-Global-Corporate_Sites-IP": { "ipRanges": [] },
-      "NL-Global-Travel_Exception-Country_IP": { "countriesAndRegions": [] }
+      "NL-Admins-Trusted_Networks-IP": {
+        "ipRanges": []
+      },
+      "NL-ServiceAccounts-Trusted_Networks-IP": {
+        "ipRanges": []
+      },
+      "NL-Global-Corporate_Sites-IP": {
+        "ipRanges": []
+      },
+      "NL-Global-Travel_Exception-Country_IP": {
+        "countriesAndRegions": []
+      }
     }
   },
-
   "authenticationMethods": {
     "ensureMethodsForStrengths": true,
-    "passkeyPersonas": [ "Admins" ],
+    "passkeyPersonas": [
+      "Admins"
+    ],
     "deployFullPolicy": false
   }
 }
