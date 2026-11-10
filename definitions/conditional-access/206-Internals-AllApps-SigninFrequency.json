@@ -37,7 +37,7 @@
       "includeUsers": [],
       "excludeUsers": [],
       "includeGroups": [
-        "{{group:Admins}}"
+        "{{group:Internals}}"
       ],
       "excludeGroups": [
         "{{group:Breakglass}}"
