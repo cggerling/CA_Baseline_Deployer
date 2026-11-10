@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Persona-Gruppen für das CA-Framework. Den Anzeigenamen bildet der Deployer aus groupNamePattern in der Tenant-Config, Standard ist SG-CA-Persona-{Persona}. In den Policies werden die Gruppen nur über den Schlüssel angesprochen, z. B. {{group:Admins}}. {{group:AllPersonas}} steht für alle Gruppen dieser Datei.",
+  "_hinweis": "Persona-Gruppen für das CA-Framework. Den Anzeigenamen bildet der Deployer aus groupNamePattern in der Tenant-Config, Standard ist SG-CA-Persona-{Persona}. In den Policies werden die Gruppen nur über den Schlüssel angesprochen, z. B. {{group:Admins}}. {{group:AllPersonas}} steht für alle Gruppen dieser Datei. isAssignableToRole setzt nur das Flag, damit nur Privileged Role Administrators die Mitglieder ändern können. Der Deployer weist diesen Gruppen keine Entra-Rolle zu.",
   "personas": [
     {
       "key": "Admins",
@@ -46,7 +46,7 @@
     {
       "key": "ServiceAccounts",
       "description": "CA Persona: Dienstkonten - Benutzerkonten für Anwendungen oder Skripte",
-      "isAssignableToRole": false,
+      "isAssignableToRole": true,
       "membershipRule": null,
       "restrictedAdministrativeUnit": true
     }
