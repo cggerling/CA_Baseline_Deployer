@@ -37,7 +37,7 @@
       "includeUsers": [],
       "excludeUsers": [],
       "includeGroups": [
-        "{{group:Externals}}"
+        "{{group:Guests}}"
       ],
       "excludeGroups": [
         "{{group:Breakglass}}"
