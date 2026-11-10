@@ -1,0 +1,83 @@
+{
+  "_deployer": {
+    "key": "210-Internals-Windows-TokenProtection",
+    "category": "Internals",
+    "defaultSelected": true,
+    "customerInput": []
+  },
+  "displayName": "#210-Internals‑Windows‑TokenProtection",
+  "state": "enabledForReportingButNotEnforced",
+  "grantControls": null,
+  "partialEnablementStrategy": null,
+  "conditions": {
+    "userRiskLevels": [],
+    "signInRiskLevels": [],
+    "clientAppTypes": [
+      "mobileAppsAndDesktopClients"
+    ],
+    "locations": null,
+    "times": null,
+    "deviceStates": null,
+    "clientApplications": null,
+    "agents": null,
+    "actionsAndDestinations": null,
+    "applications": {
+      "includeApplications": [
+        "9cdead84-a844-4324-93f2-b2e6bb768d07",
+        "00000003-0000-0ff1-ce00-000000000000",
+        "00000002-0000-0ff1-ce00-000000000000",
+        "cc15fd57-2c6c-4117-a88c-83b1d56b4bbe",
+        "0af06dc6-e4b5-4f28-818e-e78e62d137a5",
+        "270efc09-cd0d-444b-a71f-39af4910ec45"
+      ],
+      "excludeApplications": [],
+      "includeUserActions": [],
+      "includeAgentActions": [],
+      "includeAuthenticationContextClassReferences": [],
+      "applicationFilter": null
+    },
+    "users": {
+      "includeUsers": [],
+      "excludeUsers": [],
+      "includeGroups": [
+        "{{group:Internals}}"
+      ],
+      "excludeGroups": [
+        "{{group:Breakglass}}"
+      ],
+      "includeRoles": [],
+      "excludeRoles": [],
+      "includeGuestsOrExternalUsers": null,
+      "excludeGuestsOrExternalUsers": null
+    },
+    "platforms": {
+      "includePlatforms": [
+        "windows"
+      ],
+      "excludePlatforms": []
+    },
+    "devices": {
+      "includeDeviceStates": [],
+      "excludeDeviceStates": [],
+      "includeDevices": [],
+      "excludeDevices": [],
+      "deviceFilter": {
+        "mode": "exclude",
+        "rule": "(device.systemLabels -contains \"CloudPC\" -and device.trustType -eq \"AzureAD\")\n-or (device.systemLabels -contains \"AzureVirtualDesktop\" -and device.trustType -eq \"AzureAD\")\n-or (device.systemLabels -contains \"MicrosoftPowerAutomate\" -and device.trustType -eq \"AzureAD\")\n-or (device.profileType -eq \"SecureVM\" -and device.trustType -eq \"AzureAD\")\n-or ((device.enrollmentProfileName -eq \"Autpilot_EntraIDJoined\")-or(device.enrollmentProfileName -eq \"Autpilot_EntraHybridJoined\"))"
+      }
+    }
+  },
+  "sessionControls": {
+    "disableResilienceDefaults": null,
+    "applicationEnforcedRestrictions": null,
+    "cloudAppSecurity": null,
+    "signInFrequency": null,
+    "persistentBrowser": null,
+    "continuousAccessEvaluation": null,
+    "blockSensitiveActions": null,
+    "humanApproval": null,
+    "secureSignInSession": {
+      "isEnabled": true
+    }
+  }
+}

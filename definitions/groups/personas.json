@@ -1,0 +1,54 @@
+{
+  "_hinweis": "Persona-Gruppen für das CA-Framework. Den Anzeigenamen bildet der Deployer aus groupNamePattern in der Tenant-Config, Standard ist SG-CA-Persona-{Persona}. In den Policies werden die Gruppen nur über den Schlüssel angesprochen, z. B. {{group:Admins}}. {{group:AllPersonas}} steht für alle Gruppen dieser Datei.",
+  "personas": [
+    {
+      "key": "Admins",
+      "description": "CA Persona: Administratoren - Konten mit privilegierten Rollen",
+      "isAssignableToRole": true,
+      "membershipRule": null,
+      "restrictedAdministrativeUnit": true
+    },
+    {
+      "key": "Breakglass",
+      "description": "CA Persona: Notfallkonten mit höchsten Rechten, nur für den Krisenfall",
+      "isAssignableToRole": true,
+      "membershipRule": null,
+      "restrictedAdministrativeUnit": true
+    },
+    {
+      "key": "Internals",
+      "description": "CA Persona: Interne Mitarbeitende - festangestellte Mitarbeitende",
+      "isAssignableToRole": false,
+      "membershipRule": null,
+      "restrictedAdministrativeUnit": false
+    },
+    {
+      "key": "Externals",
+      "description": "CA Persona: Externe Mitarbeitende - vollwertiger Account im Tenant inkl. Lizenz (Partner, Berater, befristete Kräfte)",
+      "isAssignableToRole": false,
+      "membershipRule": null,
+      "restrictedAdministrativeUnit": false
+    },
+    {
+      "key": "Developers",
+      "description": "CA Persona: Entwickler - interne Mitarbeitende mit vollwertigem Account, die aufgrund ihrer Rolle abweichende Richtlinien benötigen",
+      "isAssignableToRole": false,
+      "membershipRule": null,
+      "restrictedAdministrativeUnit": false
+    },
+    {
+      "key": "Guests",
+      "description": "CA Persona: Gäste - B2B-Gastkonten für die Zusammenarbeit",
+      "isAssignableToRole": false,
+      "membershipRule": "(user.userType -eq \"guest\")",
+      "restrictedAdministrativeUnit": false
+    },
+    {
+      "key": "ServiceAccounts",
+      "description": "CA Persona: Dienstkonten - Benutzerkonten für Anwendungen oder Skripte",
+      "isAssignableToRole": false,
+      "membershipRule": null,
+      "restrictedAdministrativeUnit": true
+    }
+  ]
+}

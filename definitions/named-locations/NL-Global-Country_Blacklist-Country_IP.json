@@ -1,0 +1,21 @@
+{
+  "_deployer": {
+    "key": "NL-Global-Country_Blacklist-Country_IP"
+  },
+  "@odata.type": "#microsoft.graph.countryNamedLocation",
+  "displayName": "NL-Global-Country_Blacklist-Country_IP",
+  "countriesAndRegions": [
+    "CN",
+    "RU",
+    "IR",
+    "KP",
+    "BY",
+    "PK",
+    "VN",
+    "NG",
+    "UA",
+    "BR"
+  ],
+  "includeUnknownCountriesAndRegions": false,
+  "countryLookupMethod": "clientIpAddress"
+}

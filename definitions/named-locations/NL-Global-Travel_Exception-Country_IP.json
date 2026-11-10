@@ -1,0 +1,10 @@
+{
+  "_deployer": {
+    "key": "NL-Global-Travel_Exception-Country_IP"
+  },
+  "@odata.type": "#microsoft.graph.countryNamedLocation",
+  "displayName": "NL-Global-Travel_Exception-Country_IP",
+  "countriesAndRegions": [],
+  "includeUnknownCountriesAndRegions": false,
+  "countryLookupMethod": "clientIpAddress"
+}

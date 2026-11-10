@@ -1,0 +1,15 @@
+{
+  "_deployer": {
+    "key": "ModernMFA"
+  },
+  "displayName": "ModernMFA",
+  "description": "Alle Modernen MFA Methoden wie Passkey, Authenticator mit Push etc.",
+  "allowedCombinations": [
+    "windowsHelloForBusiness",
+    "fido2",
+    "x509CertificateMultiFactor",
+    "deviceBasedPush",
+    "password,microsoftAuthenticatorPush"
+  ],
+  "combinationConfigurations": []
+}

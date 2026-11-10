@@ -1,0 +1,13 @@
+{
+  "_deployer": {
+    "key": "Phish-resistant-MFA-Prod"
+  },
+  "displayName": "Phish-resistant-MFA-Prod",
+  "description": "Anmeldemethoden welche als PhishingResistant gelten",
+  "allowedCombinations": [
+    "windowsHelloForBusiness",
+    "fido2",
+    "x509CertificateMultiFactor"
+  ],
+  "combinationConfigurations": []
+}

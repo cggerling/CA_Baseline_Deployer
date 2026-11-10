@@ -1,0 +1,242 @@
+{
+  "_deployer": {
+    "key": "NL-Global-ZScaler_Ranges-IP"
+  },
+  "@odata.type": "#microsoft.graph.ipNamedLocation",
+  "displayName": "NL-Global-ZScaler_Ranges-IP",
+  "isTrusted": false,
+  "ipRanges": [
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "58.220.95.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "64.215.22.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "87.58.64.0/18"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "94.188.131.0/25"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "94.188.139.64/26"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "94.188.248.64/26"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "98.98.26.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "98.98.27.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "98.98.28.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "98.98.169.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "98.98.186.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "98.98.187.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "101.2.192.0/18"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "103.215.126.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "104.129.192.0/20"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "112.137.170.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "116.196.192.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "122.10.149.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "124.248.141.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "128.1.68.0/23"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "128.177.125.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "134.168.2.0/23"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "136.226.0.0/16"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "137.31.0.0/16"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "137.83.128.0/18"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "140.210.152.0/23"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "147.161.128.0/17"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "154.113.23.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "159.254.0.0/16"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "162.128.187.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "165.225.0.0/17"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "165.225.192.0/18"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "167.103.0.0/16"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "167.106.0.0/16"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "170.85.0.0/16"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "175.107.128.0/18"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "185.46.212.0/22"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "194.9.96.0/20"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "194.9.112.0/22"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "194.9.116.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "196.23.154.64/27"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "196.23.154.96/27"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "197.98.201.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "197.156.241.224/27"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "198.14.64.0/18"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "199.168.148.0/23"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "205.220.0.0/17"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "209.55.128.0/18"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "209.55.192.0/19"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "211.144.19.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "220.243.154.0/23"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "220.243.158.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "221.122.91.0/24"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv6CidrRange",
+      "cidrAddress": "2400:7aa0::/32"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv6CidrRange",
+      "cidrAddress": "2602:ffe4:c4f:1000::/64"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv6CidrRange",
+      "cidrAddress": "2604:980:e103:100::/64"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv6CidrRange",
+      "cidrAddress": "2605:4300::/32"
+    },
+    {
+      "@odata.type": "#microsoft.graph.iPv6CidrRange",
+      "cidrAddress": "2a03:eec0::/32"
+    }
+  ]
+}

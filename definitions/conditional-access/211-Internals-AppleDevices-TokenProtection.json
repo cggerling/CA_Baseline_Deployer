@@ -1,0 +1,72 @@
+{
+  "_deployer": {
+    "key": "211-Internals-AppleDevices-TokenProtection",
+    "category": "Internals",
+    "defaultSelected": true,
+    "customerInput": []
+  },
+  "displayName": "#211-Internals‑AppleDevices‑TokenProtection",
+  "state": "enabledForReportingButNotEnforced",
+  "grantControls": null,
+  "partialEnablementStrategy": null,
+  "conditions": {
+    "userRiskLevels": [],
+    "signInRiskLevels": [],
+    "clientAppTypes": [
+      "mobileAppsAndDesktopClients"
+    ],
+    "locations": null,
+    "times": null,
+    "deviceStates": null,
+    "devices": null,
+    "clientApplications": null,
+    "agents": null,
+    "actionsAndDestinations": null,
+    "applications": {
+      "includeApplications": [
+        "cc15fd57-2c6c-4117-a88c-83b1d56b4bbe",
+        "00000002-0000-0ff1-ce00-000000000000",
+        "00000003-0000-0ff1-ce00-000000000000"
+      ],
+      "excludeApplications": [],
+      "includeUserActions": [],
+      "includeAgentActions": [],
+      "includeAuthenticationContextClassReferences": [],
+      "applicationFilter": null
+    },
+    "users": {
+      "includeUsers": [],
+      "excludeUsers": [],
+      "includeGroups": [
+        "{{group:Internals}}"
+      ],
+      "excludeGroups": [
+        "{{group:Breakglass}}"
+      ],
+      "includeRoles": [],
+      "excludeRoles": [],
+      "includeGuestsOrExternalUsers": null,
+      "excludeGuestsOrExternalUsers": null
+    },
+    "platforms": {
+      "includePlatforms": [
+        "iOS",
+        "macOS"
+      ],
+      "excludePlatforms": []
+    }
+  },
+  "sessionControls": {
+    "disableResilienceDefaults": null,
+    "applicationEnforcedRestrictions": null,
+    "cloudAppSecurity": null,
+    "signInFrequency": null,
+    "persistentBrowser": null,
+    "continuousAccessEvaluation": null,
+    "blockSensitiveActions": null,
+    "humanApproval": null,
+    "secureSignInSession": {
+      "isEnabled": true
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "_hinweis": "Ordnet die Objekt-IDs aus dem Quelltenant den logischen Schlüsseln zu. Wird nur von tools/ConvertFrom-CAExport.ps1 gelesen. Die IDs der Authentifizierungsstärken liest der Konverter direkt aus den AuthStr_*.json.",
+  "groups": {
+    "39ada3ae-2a6d-4ab1-8e7a-7ab976bfcbcc": "Breakglass",
+    "a9563ebd-5f4a-4f6a-85d4-062a1deec3a8": "Admins",
+    "229a28d9-1bf9-4f5a-80d7-ca4f46d8ff2f": "Internals",
+    "fe175353-8146-43a5-96cc-d4e9ff6b21b7": "Externals",
+    "be96c795-7a02-45c9-bb32-990a662f6dc8": "ServiceAccounts"
+  },
+  "namedLocations": {
+    "1df757b8-1d61-48ae-985c-5a395db84740": "NL-Global-Country_Blacklist-Country_IP",
+    "1a660b8a-1394-41ee-99c0-2de3ccf5a006": "NL-Admins-Country_Whitelist-Country_IP",
+    "0df28f02-0301-433c-91e3-43e5544308c2": "NL-Global-Corporate_Sites-IP"
+  }
+}

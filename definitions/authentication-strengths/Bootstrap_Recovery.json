@@ -1,0 +1,12 @@
+{
+  "_deployer": {
+    "key": "Bootstrap_Recovery"
+  },
+  "displayName": "Bootstrap_&_Recovery",
+  "description": "MFA für Onboarding & Recovery Workflows",
+  "allowedCombinations": [
+    "temporaryAccessPassMultiUse",
+    "temporaryAccessPassOneTime"
+  ],
+  "combinationConfigurations": []
+}

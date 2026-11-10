@@ -1,0 +1,10 @@
+{
+  "_deployer": {
+    "key": "PersonaRestricted",
+    "members": "Alle Persona-Gruppen mit restrictedAdministrativeUnit = true aus groups/personas.json",
+    "hinweis": "isMemberManagementRestricted lässt sich nach dem Anlegen nicht mehr ändern. Sobald eine Gruppe in der AU liegt, können tenant-weite Admins (auch Global Admins) ihre Mitglieder nicht mehr bearbeiten. Deshalb trägt der Deployer die Breakglass-Konten vorher ein."
+  },
+  "displayName": "AU-CA-Persona-Restricted",
+  "description": "Schützt die CA-Persona-Gruppen vor Änderungen durch tenant-weite Admins",
+  "isMemberManagementRestricted": true
+}

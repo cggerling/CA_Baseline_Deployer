@@ -1,0 +1,9 @@
+{
+  "_deployer": {
+    "key": "NL-Admins-Trusted_Networks-IP"
+  },
+  "@odata.type": "#microsoft.graph.ipNamedLocation",
+  "displayName": "NL-Admins-Trusted_Networks-IP",
+  "isTrusted": false,
+  "ipRanges": []
+}

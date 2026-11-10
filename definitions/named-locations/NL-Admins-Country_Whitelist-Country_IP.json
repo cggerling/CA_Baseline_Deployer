@@ -1,0 +1,12 @@
+{
+  "_deployer": {
+    "key": "NL-Admins-Country_Whitelist-Country_IP"
+  },
+  "@odata.type": "#microsoft.graph.countryNamedLocation",
+  "displayName": "NL-Admins-Country_Whitelist-Country_IP",
+  "countriesAndRegions": [
+    "DE"
+  ],
+  "includeUnknownCountriesAndRegions": false,
+  "countryLookupMethod": "clientIpAddress"
+}
