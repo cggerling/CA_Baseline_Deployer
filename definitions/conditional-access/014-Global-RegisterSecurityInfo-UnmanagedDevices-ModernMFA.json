@@ -39,8 +39,7 @@
       "excludeUsers": [],
       "includeGroups": [],
       "excludeGroups": [
-        "{{group:Breakglass}}",
-        "{{group:Admins}}"
+        "{{group:Breakglass}}"
       ],
       "includeRoles": [],
       "excludeRoles": [],
