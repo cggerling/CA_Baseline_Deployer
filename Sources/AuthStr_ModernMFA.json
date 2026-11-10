@@ -11,8 +11,6 @@
     "fido2",
     "x509CertificateMultiFactor",
     "deviceBasedPush",
-    "temporaryAccessPassOneTime",
-    "temporaryAccessPassMultiUse",
     "password,microsoftAuthenticatorPush"
   ],
   "combinationConfigurations@odata.context": "https://graph.microsoft.com/v1.0/$metadata#policies/authenticationStrengthPolicies('bef91ad1-e5f3-429b-bc6a-6c1db12d577c')/combinationConfigurations",

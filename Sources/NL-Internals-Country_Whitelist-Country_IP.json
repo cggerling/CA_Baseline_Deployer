@@ -1,0 +1,21 @@
+{
+  "@odata.type": "#microsoft.graph.countryNamedLocation",
+  "displayName": "NL-Internals-Country_Whitelist-Country_IP",
+  "countriesAndRegions": [
+    "DE",
+    "AT",
+    "BE",
+    "CH",
+    "CZ",
+    "DK",
+    "FR",
+    "LU",
+    "NL",
+    "PL",
+    "ES",
+    "PT",
+    "GB"
+  ],
+  "includeUnknownCountriesAndRegions": false,
+  "countryLookupMethod": "clientIpAddress"
+}

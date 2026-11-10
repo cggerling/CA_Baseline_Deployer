@@ -2,12 +2,13 @@
   "id": "bfed63d9-12cd-4ab6-9546-c7adc53be209",
   "createdDateTime": "2026-08-24T19:37:47.3964414Z",
   "modifiedDateTime": "2026-10-26T18:31:37.7691205Z",
-  "displayName": "Onboarding-MFA",
-  "description": "MFA für Onboarding Workflows",
+  "displayName": "Bootstrap_&_Recovery",
+  "description": "MFA für Onboarding & Recovery Workflows",
   "policyType": "custom",
   "requirementsSatisfied": "mfa",
   "allowedCombinations": [
-    "temporaryAccessPassMultiUse"
+    "temporaryAccessPassMultiUse",
+    "temporaryAccessPassOneTime"
   ],
   "combinationConfigurations@odata.context": "https://graph.microsoft.com/v1.0/$metadata#policies/authenticationStrengthPolicies('bfed63d9-12cd-4ab6-9546-c7adc53be209')/combinationConfigurations",
   "combinationConfigurations": []

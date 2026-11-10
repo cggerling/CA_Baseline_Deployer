@@ -9,8 +9,7 @@
   "allowedCombinations": [
     "windowsHelloForBusiness",
     "fido2",
-    "x509CertificateMultiFactor",
-    "temporaryAccessPassOneTime"
+    "x509CertificateMultiFactor"
   ],
   "combinationConfigurations@odata.context": "https://graph.microsoft.com/v1.0/$metadata#policies/authenticationStrengthPolicies('e635ac7e-6f2d-427e-b9fd-746ef57a9e8f')/combinationConfigurations",
   "combinationConfigurations": []

@@ -4,13 +4,13 @@
 
 .DESCRIPTION
     Erstellt die Gruppen gemäß Persona-Konzept:
-      - SG-CA-Persona-Admins       Role-assignable, Assigned
-      - SG-CA-Persona-Breakglass   Role-assignable, Assigned
-      - SG-CA-Persona-Internals    Assigned
-      - SG-CA-Persona-Externals    Assigned
-      - SG-CA-Persona-Developers   Assigned
-      - SG-CA-Persona-Guests       Dynamic: (user.userType -eq "guest")
-      - SG-CA-Persona-ServiceUser  Role-assignable, Assigned
+      - SG-CA-Persona-Admins           Role-assignable, Assigned
+      - SG-CA-Persona-Breakglass       Role-assignable, Assigned
+      - SG-CA-Persona-Internals        Assigned
+      - SG-CA-Persona-Externals        Assigned
+      - SG-CA-Persona-Developers       Assigned
+      - SG-CA-Persona-Guests           Dynamic: (user.userType -eq "guest")
+      - SG-CA-Persona-ServiceAccounts  Role-assignable, Assigned
 
     Optional (-AddToRestrictedAU) wird eine Restricted Management Administrative Unit
     angelegt bzw. wiederverwendet und Admins, Breakglass und ServiceUser werden hinzugefügt.
