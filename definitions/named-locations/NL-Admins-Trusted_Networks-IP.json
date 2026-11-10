@@ -1,9 +1,23 @@
 {
   "_deployer": {
-    "key": "NL-Admins-Trusted_Networks-IP"
+    "key": "NL-Admins-Trusted_Networks-IP",
+    "customerInput": [
+      {
+        "name": "ipRanges",
+        "type": "cidrList",
+        "required": false,
+        "placeholder": "192.0.2.1/32",
+        "hint": "IP-Bereiche des Kunden. 192.0.2.1/32 stammt aus dem Dokumentationsbereich TEST-NET-1 (RFC 5737) und ist nie im Internet geroutet. Er steht nur drin, weil Graph keine leere IP-Location annimmt. Der Deployer warnt, solange der Platzhalter verwendet wird."
+      }
+    ]
   },
   "@odata.type": "#microsoft.graph.ipNamedLocation",
   "displayName": "NL-Admins-Trusted_Networks-IP",
   "isTrusted": false,
-  "ipRanges": []
+  "ipRanges": [
+    {
+      "@odata.type": "#microsoft.graph.iPv4CidrRange",
+      "cidrAddress": "192.0.2.1/32"
+    }
+  ]
 }

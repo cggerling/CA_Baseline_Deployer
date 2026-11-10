@@ -1,6 +1,14 @@
 {
   "_deployer": {
-    "key": "NL-Global-Travel_Exception-Country_IP"
+    "key": "NL-Global-Travel_Exception-Country_IP",
+    "customerInput": [
+      {
+        "name": "countriesAndRegions",
+        "type": "countryList",
+        "required": false,
+        "hint": "Länder für Reiseausnahmen (ISO-3166-Codes, z. B. US). Bleibt die Liste leer, wird die Location ohne Länder angelegt."
+      }
+    ]
   },
   "@odata.type": "#microsoft.graph.countryNamedLocation",
   "displayName": "NL-Global-Travel_Exception-Country_IP",
