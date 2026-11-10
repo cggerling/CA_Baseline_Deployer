@@ -40,12 +40,7 @@
       "excludeUsers": [],
       "includeGroups": [],
       "excludeGroups": [
-        "{{group:Admins}}",
-        "{{group:Breakglass}}",
-        "{{unmapped:448af9dd-7ba8-441c-88bf-991ed73eb230}}",
-        "{{group:Externals}}",
-        "{{group:Internals}}",
-        "{{group:ServiceAccounts}}"
+        "{{group:AllPersonas}}"
       ],
       "includeRoles": [],
       "excludeRoles": [],
