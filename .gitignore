@@ -20,3 +20,6 @@ config.local.*
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Kunden-Configs enthalten Tenant-Daten und bleiben lokal
+/config/tenants/

@@ -1,6 +1,15 @@
 {
   "_deployer": {
-    "key": "NL-Global-Corporate_Sites-IP"
+    "key": "NL-Global-Corporate_Sites-IP",
+    "customerInput": [
+      {
+        "name": "ipRanges",
+        "type": "cidrList",
+        "required": false,
+        "placeholder": "192.0.2.1/32",
+        "hint": "Öffentliche IP-Bereiche der Standorte. Die Location ist als vertrauenswürdig markiert und wird in #105 und #502 ausgenommen. 192.0.2.1/32 (TEST-NET-1, RFC 5737) ist nur ein Platzhalter."
+      }
+    ]
   },
   "@odata.type": "#microsoft.graph.ipNamedLocation",
   "displayName": "NL-Global-Corporate_Sites-IP",
