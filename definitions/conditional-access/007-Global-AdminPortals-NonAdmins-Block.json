@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#007-Global‑AdminPortals‑NonAdmins‑Block",
+  "displayName": "#007-Global-AdminPortals-NonAdmins-Block",
   "state": "enabledForReportingButNotEnforced",
   "partialEnablementStrategy": null,
   "sessionControls": null,

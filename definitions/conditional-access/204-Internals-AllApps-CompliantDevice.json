@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#204-Internals‑AllApps‑CompliantDevice",
+  "displayName": "#204-Internals-AllApps-CompliantDevice",
   "state": "enabledForReportingButNotEnforced",
   "partialEnablementStrategy": null,
   "sessionControls": null,

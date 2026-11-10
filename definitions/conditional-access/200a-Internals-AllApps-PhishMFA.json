@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#200a-Internals‑AllApps‑PhishMFA",
+  "displayName": "#200a-Internals-AllApps-PhishMFA",
   "state": "enabledForReportingButNotEnforced",
   "partialEnablementStrategy": null,
   "sessionControls": null,

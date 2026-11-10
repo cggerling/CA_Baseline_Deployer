@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#104-Admins‑AllApps‑CompliantDevice",
+  "displayName": "#104-Admins-AllApps-CompliantDevice",
   "state": "enabledForReportingButNotEnforced",
   "partialEnablementStrategy": null,
   "sessionControls": null,

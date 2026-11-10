@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#200-Internals‑AllApps‑ModernMFA",
+  "displayName": "#200-Internals-AllApps-ModernMFA",
   "state": "enabled",
   "partialEnablementStrategy": null,
   "sessionControls": null,

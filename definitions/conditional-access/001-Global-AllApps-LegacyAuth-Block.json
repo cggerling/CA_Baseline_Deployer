@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#001-Global‑AllApps‑LegacyAuth‑Block",
+  "displayName": "#001-Global-AllApps-LegacyAuth-Block",
   "state": "enabled",
   "partialEnablementStrategy": null,
   "sessionControls": null,

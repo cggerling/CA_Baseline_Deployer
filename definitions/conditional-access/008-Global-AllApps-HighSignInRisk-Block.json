@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#008-Global‑AllApps‑HighSignInRisk‑Block",
+  "displayName": "#008-Global-AllApps-HighSignInRisk-Block",
   "state": "enabled",
   "partialEnablementStrategy": null,
   "sessionControls": null,

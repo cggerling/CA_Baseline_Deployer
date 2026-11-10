@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#102-Admins‑AllApps‑LowMediumSignInRisk‑Block",
+  "displayName": "#102-Admins-AllApps-LowMediumSignInRisk-Block",
   "state": "enabledForReportingButNotEnforced",
   "partialEnablementStrategy": null,
   "sessionControls": null,

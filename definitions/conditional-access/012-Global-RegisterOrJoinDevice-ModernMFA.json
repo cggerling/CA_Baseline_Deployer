@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#012-Global‑RegisterOrJoinDevice‑ModernMFA",
+  "displayName": "#012-Global-RegisterOrJoinDevice-ModernMFA",
   "state": "enabledForReportingButNotEnforced",
   "partialEnablementStrategy": null,
   "sessionControls": null,

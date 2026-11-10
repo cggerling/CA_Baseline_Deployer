@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#004-Global‑AllApps‑NeverPersistentSession",
+  "displayName": "#004-Global-AllApps-NeverPersistentSession",
   "state": "enabled",
   "grantControls": null,
   "partialEnablementStrategy": null,

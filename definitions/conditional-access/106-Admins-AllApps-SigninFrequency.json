@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#106-Admins‑AllApps-SigninFrequency",
+  "displayName": "#106-Admins-AllApps-SigninFrequency",
   "state": "enabledForReportingButNotEnforced",
   "grantControls": null,
   "partialEnablementStrategy": null,

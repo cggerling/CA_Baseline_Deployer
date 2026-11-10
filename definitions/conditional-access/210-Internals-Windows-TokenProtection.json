@@ -5,7 +5,7 @@
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#210-Internals‑Windows‑TokenProtection",
+  "displayName": "#210-Internals-Windows-TokenProtection",
   "state": "enabledForReportingButNotEnforced",
   "grantControls": null,
   "partialEnablementStrategy": null,
