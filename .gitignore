@@ -1,0 +1,22 @@
+# Lokale Tenant-Exporte, Backups und Logs gehören nicht ins Repo
+/Exports/
+/Backups/
+/Logs/
+*.log
+
+# Zugangsdaten und lokale Konfiguration
+*.pfx
+*.pem
+*.cer
+*.key
+.env
+*.secret.json
+*.local.json
+config.local.*
+
+# Editor und Betriebssystem
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
