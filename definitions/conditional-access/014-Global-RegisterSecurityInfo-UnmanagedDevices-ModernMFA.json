@@ -63,7 +63,7 @@
     "customAuthenticationFactors": [],
     "termsOfUse": [],
     "authenticationStrength": {
-      "id": "{{authStrength:ModernMFA}}"
+      "id": "{{authStrength:Bootstrap_Recovery}}"
     }
   }
 }
