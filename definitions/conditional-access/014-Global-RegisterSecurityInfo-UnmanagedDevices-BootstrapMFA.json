@@ -1,11 +1,11 @@
 {
   "_deployer": {
-    "key": "014-Global-RegisterSecurityInfo-UnmanagedDevices-ModernMFA",
+    "key": "014-Global-RegisterSecurityInfo-UnmanagedDevices-BootstrapMFA",
     "category": "Global",
     "defaultSelected": true,
     "customerInput": []
   },
-  "displayName": "#014-Global-RegisterSecurityInfo-UnmanagedDevices-ModernMFA",
+  "displayName": "#014-Global-RegisterSecurityInfo-UnmanagedDevices-BootstrapMFA",
   "state": "enabledForReportingButNotEnforced",
   "partialEnablementStrategy": null,
   "sessionControls": null,
