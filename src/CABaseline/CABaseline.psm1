@@ -614,29 +614,30 @@ function Sync-CAAuthMethods($Strengths) {
             if ($targets -contains $t.id) { Write-CALog $step $label 'warnung' "Persona-Gruppe $($t.id) ist in der Methode ausgeschlossen. Das muss der Kunde selbst entscheiden." }
         }
 
-        $enabled     = $cfg.state -eq 'enabled'
-        $hasAllUsers = [bool]($include | Where-Object { $_.id -eq 'all_users' })
-        if ($enabled -and $hasAllUsers) {
-            if ($method -eq 'Fido2') {
-                Write-CALog $step $label 'warnung' 'ist bereits für alle Benutzer aktiviert. Der Deployer schränkt das nicht ein, das muss der Kunde entscheiden.'
+        # Eine aktivierte Methode hat der Kunde bewusst konfiguriert. Der Deployer ändert sie
+        # nicht, auch keine Ziele. Er meldet nur, ob die Persona-Gruppen abgedeckt sind.
+        if ($cfg.state -eq 'enabled') {
+            $includeIds = @($include | ForEach-Object { $_.id })
+            if ($includeIds -contains 'all_users') {
+                if ($method -eq 'Fido2') {
+                    Write-CALog $step $label 'warnung' 'ist bereits für alle Benutzer aktiviert. Der Deployer ändert das nicht, das muss der Kunde entscheiden.'
+                }
+                else { Write-CALog $step $label 'unverändert' 'für alle Benutzer aktiviert' }
+                continue
             }
-            else { Write-CALog $step $label 'unverändert' 'für alle Benutzer aktiviert' }
+            $uncovered = @($targets | Where-Object { $includeIds -notcontains $_ })
+            if ($uncovered.Count) {
+                Write-CALog $step $label 'warnung' "aktiviert, aber $($uncovered.Count) Persona-Gruppe(n) sind kein Ziel. Nicht geändert, weil die Methode schon aktiv ist. Bei Bedarf von Hand ergänzen."
+            }
+            else { Write-CALog $step $label 'unverändert' 'aktiviert, Persona-Gruppen abgedeckt' }
             continue
         }
 
         # Bei einer deaktivierten Methode wirken die hinterlegten Ziele nicht. Würde der Deployer
         # sie beim Einschalten übernehmen, wären z. B. Passkeys plötzlich für alle Benutzer frei.
         # Deshalb gelten nach dem Einschalten nur die Persona-Gruppen.
-        $keep    = if ($enabled) { $include } else { @() }
-        $missing = @($targets | Where-Object { @($keep | ForEach-Object { $_.id }) -notcontains $_ })
-        if ($enabled -and -not $missing.Count) {
-            Write-CALog $step $label 'unverändert' 'für die Persona-Gruppen aktiviert'
-            continue
-        }
-
-        # Bestehende Ziele bleiben, fehlende Gruppen kommen dazu
+        $missing    = $targets
         $newTargets = [System.Collections.Generic.List[object]]::new()
-        foreach ($t in $keep) { $newTargets.Add($t) }
         foreach ($gid in $missing) {
             $t = [ordered]@{ targetType = 'group'; id = $gid; isRegistrationRequired = $false }
             if ($method -eq 'MicrosoftAuthenticator') {
@@ -650,7 +651,7 @@ function Sync-CAAuthMethods($Strengths) {
             $newTargets.Add($t)
         }
 
-        $detail = "Status $($cfg.state), $($missing.Count) Gruppe(n) ergänzt"
+        $detail = "war deaktiviert, jetzt aktiv für $($missing.Count) Persona-Gruppe(n)"
         if ($script:Ctx.WhatIf) { Write-CALog $step $label 'würde ändern' $detail; continue }
 
         $body = [ordered]@{
