@@ -30,6 +30,19 @@ Mit diesem Repo wird ein Conditional-Access-Framework für Entra ID per Code in 
 
 Mit `-PolicyKey '1*'` lassen sich einzelne Policies ausrollen, mit `-Steps` einzelne Schritte. Jeder Lauf schreibt ein Protokoll nach `Logs/` (nicht im Repo).
 
+## Deployment zurücknehmen
+
+`Undo-CABaseline.ps1` liest ein oder mehrere Protokolle und macht die Änderungen in umgekehrter Reihenfolge rückgängig:
+
+```powershell
+.\Undo-CABaseline.ps1 -ConfigPath .\config\tenants\kunde.json -LogPath .\Logs\<Protokoll>.json -WhatIf
+.\Undo-CABaseline.ps1 -ConfigPath .\config\tenants\kunde.json -LogPath .\Logs\<Protokoll>.json
+```
+
+Angelegte Objekte werden gelöscht, hinzugefügte Mitgliedschaften entfernt. Authentifizierungsmethoden und Stärken bekommen ihren vorherigen Stand zurück. Vertrauenswürdige Named Locations verlieren vor dem Löschen ihre Markierung, sonst lehnt Graph das Löschen ab. Policies und Named Locations, die es vorher schon gab und die der Lauf nur geändert hat, setzt das Skript nicht automatisch zurück; es meldet sie, und der alte Stand steht im Protokoll unter `Before`.
+
+Gelöschte Gruppen, Benutzer und die AU liegen 30 Tage im Papierkorb. Mit `-Purge` werden sie endgültig entfernt, was für Testtenants praktisch ist, damit ein neuer Lauf sauber startet. Vor dem Ausführen zeigt das Skript die Liste und verlangt die Eingabe `JA`.
+
 ## Aufbau
 
 ```
@@ -49,6 +62,7 @@ Sources/                       Rohexporte aus dem Referenztenant und id-mapping.
 tools/
   ConvertFrom-CAExport.ps1     macht aus Exporten tenantneutrale Vorlagen
   New-DeployerApp.ps1          legt die App-Registrierung im Kundentenant an
+Undo-CABaseline.ps1            nimmt ein Deployment anhand seines Protokolls zurück
   Remove-DeployerApp.ps1       deaktiviert oder löscht sie wieder
 ```
 
@@ -75,6 +89,7 @@ Kundeneingaben sind Werte, die nur der Kunde kennt:
 
 - #210 Token Protection braucht die Namen der Autopilot-Enrollment-Profile. Sie werden im Gerätefilter ausgenommen. Fehlen sie in der Config, fragt der Deployer nach; mit `-` lässt sich die Liste bewusst leer lassen.
 - Trusted Networks und Corporate Sites brauchen die öffentlichen IP-Bereiche. Bis sie eingetragen sind, steht dort `192.0.2.1/32` aus dem Dokumentationsbereich TEST-NET-1 (RFC 5737), weil Graph keine leere IP-Location annimmt. Der Deployer warnt, solange der Platzhalter verwendet wird.
+- Die Reiseausnahme `NL-Global-Travel_Exception-Country_IP` braucht mindestens ein Land. Ist die Liste leer, wird die Location übersprungen, weil Graph eine Länder-Location ohne Länder ablehnt.
 
 ## Ablauf eines Deployments
 
