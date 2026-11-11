@@ -135,7 +135,10 @@ function Invoke-CAGraph {
                 foreach ($v in $page.value) { $items.Add($v) }
                 $next = $page['@odata.nextLink']
             }
-            return , $items.ToArray()
+            # Bewusst ohne Komma-Operator: Aufrufer fassen das Ergebnis mit @() zusammen oder
+            # leiten es weiter. Mit Komma würde @() eine leere Liste in eine Liste mit einem
+            # leeren Element verwandeln.
+            return $items.ToArray()
         }
         catch {
             # Drosselung (429) und kurzzeitige Fehler bis zu dreimal wiederholen
@@ -611,21 +614,29 @@ function Sync-CAAuthMethods($Strengths) {
             if ($targets -contains $t.id) { Write-CALog $step $label 'warnung' "Persona-Gruppe $($t.id) ist in der Methode ausgeschlossen. Das muss der Kunde selbst entscheiden." }
         }
 
+        $enabled     = $cfg.state -eq 'enabled'
         $hasAllUsers = [bool]($include | Where-Object { $_.id -eq 'all_users' })
-        if ($cfg.state -eq 'enabled' -and $hasAllUsers) {
-            Write-CALog $step $label 'unverändert' 'für alle Benutzer aktiviert'
+        if ($enabled -and $hasAllUsers) {
+            if ($method -eq 'Fido2') {
+                Write-CALog $step $label 'warnung' 'ist bereits für alle Benutzer aktiviert. Der Deployer schränkt das nicht ein, das muss der Kunde entscheiden.'
+            }
+            else { Write-CALog $step $label 'unverändert' 'für alle Benutzer aktiviert' }
             continue
         }
 
-        $missing = @($targets | Where-Object { ($include.id) -notcontains $_ })
-        if ($cfg.state -eq 'enabled' -and -not $missing.Count) {
+        # Bei einer deaktivierten Methode wirken die hinterlegten Ziele nicht. Würde der Deployer
+        # sie beim Einschalten übernehmen, wären z. B. Passkeys plötzlich für alle Benutzer frei.
+        # Deshalb gelten nach dem Einschalten nur die Persona-Gruppen.
+        $keep    = if ($enabled) { $include } else { @() }
+        $missing = @($targets | Where-Object { @($keep | ForEach-Object { $_.id }) -notcontains $_ })
+        if ($enabled -and -not $missing.Count) {
             Write-CALog $step $label 'unverändert' 'für die Persona-Gruppen aktiviert'
             continue
         }
 
         # Bestehende Ziele bleiben, fehlende Gruppen kommen dazu
         $newTargets = [System.Collections.Generic.List[object]]::new()
-        foreach ($t in $include) { $newTargets.Add($t) }
+        foreach ($t in $keep) { $newTargets.Add($t) }
         foreach ($gid in $missing) {
             $t = [ordered]@{ targetType = 'group'; id = $gid; isRegistrationRequired = $false }
             if ($method -eq 'MicrosoftAuthenticator') {
