@@ -63,10 +63,17 @@ function Write-CALog {
         [Parameter(Mandatory)]
         [ValidateSet('angelegt', 'aktualisiert', 'unverändert', 'übersprungen', 'warnung', 'fehler', 'info', 'würde anlegen', 'würde ändern')]
         [string]$Action,
-        [string]$Detail = ''
+        [string]$Detail = '',
+        # Für Undo-CABaseline.ps1: Art und ID des geänderten Objekts, bei Mitgliedschaften
+        # die ID des Containers, bei Änderungen der Stand davor
+        [string]$Kind,
+        [string]$ObjectId,
+        [string]$ParentId,
+        $Before
     )
     $script:Ctx.Log.Add([pscustomobject]@{
         Time = (Get-Date).ToString('s'); Step = $Step; Object = $Object; Action = $Action; Detail = $Detail
+        Kind = $Kind; ObjectId = $ObjectId; ParentId = $ParentId; Before = $Before
     })
     $color = switch ($Action) {
         'angelegt'      { 'Green' }
@@ -86,7 +93,7 @@ function Save-CALog {
     param([Parameter(Mandatory)] [string]$Path)
     $dir = Split-Path $Path -Parent
     if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
-    $script:Ctx.Log | ConvertTo-Json -Depth 5 | Set-Content -Path $Path -Encoding utf8
+    $script:Ctx.Log | ConvertTo-Json -Depth 30 | Set-Content -Path $Path -Encoding utf8
 }
 
 # Fragt interaktiv nach. Im nicht-interaktiven Modus kommt $null zurück.
@@ -315,24 +322,42 @@ function Sync-CANamedLocations($Definitions) {
                        ($def._deployer.customerInput | Where-Object { $_.Contains('placeholder') -and ($body.ipRanges.cidrAddress -contains $_.placeholder) })
         if ($placeholder) { Write-CALog $step $name 'warnung' 'enthält noch den Platzhalter 192.0.2.1/32, bitte echte IP-Bereiche in der Config eintragen' }
 
+        # Graph nimmt keine Länder-Location ohne Länder an. Sie wird übersprungen, und Policies,
+        # die darauf verweisen, melden das später selbst.
+        if ($body['@odata.type'] -eq '#microsoft.graph.countryNamedLocation' -and -not @($body.countriesAndRegions).Count) {
+            Write-CALog $step $name 'übersprungen' 'keine Länder angegeben (inputs.namedLocations in der Config)'
+            continue
+        }
+
         $current = $existing | Where-Object { $_.displayName -eq $name } | Select-Object -First 1
         if ($script:Ctx.ValidateOnly) {
             $script:Ctx.NamedLocations[$name] = New-FakeId $name
             continue
         }
-        if ($current) {
-            $script:Ctx.NamedLocations[$name] = $current.id
-            if ($script:Ctx.WhatIf) { Write-CALog $step $name 'würde ändern'; continue }
-            Invoke-CAGraph -Method PATCH -Path "/identity/conditionalAccess/namedLocations/$($current.id)" -Body $body | Out-Null
-            Write-CALog $step $name 'aktualisiert'
+        try {
+            if ($current) {
+                $script:Ctx.NamedLocations[$name] = $current.id
+                if ($script:Ctx.WhatIf) { Write-CALog $step $name 'würde ändern'; continue }
+                Invoke-CAGraph -Method PATCH -Path "/identity/conditionalAccess/namedLocations/$($current.id)" -Body $body | Out-Null
+                Write-CALog $step $name 'aktualisiert' -Kind NamedLocation -ObjectId $current.id -Before $current
+            }
+            else {
+                if ($script:Ctx.WhatIf) { $script:Ctx.NamedLocations[$name] = New-FakeId $name; Write-CALog $step $name 'würde anlegen'; continue }
+                $new = Invoke-CAGraph -Method POST -Path '/identity/conditionalAccess/namedLocations' -Body $body
+                $script:Ctx.NamedLocations[$name] = $new.id
+                Write-CALog $step $name 'angelegt' $new.id -Kind NamedLocation -ObjectId $new.id
+            }
         }
-        else {
-            if ($script:Ctx.WhatIf) { $script:Ctx.NamedLocations[$name] = New-FakeId $name; Write-CALog $step $name 'würde anlegen'; continue }
-            $new = Invoke-CAGraph -Method POST -Path '/identity/conditionalAccess/namedLocations' -Body $body
-            $script:Ctx.NamedLocations[$name] = $new.id
-            Write-CALog $step $name 'angelegt' $new.id
-        }
+        catch { Write-CALog $step $name 'fehler' (Get-CAErrorText $_) }
     }
+}
+
+# Kurzer Fehlertext aus einer Graph-Antwort statt des kompletten HTTP-Dumps
+function Get-CAErrorText($ErrorRecord) {
+    $details = if ($ErrorRecord.ErrorDetails) { $ErrorRecord.ErrorDetails.Message } else { '' }
+    $text = "$details $($ErrorRecord.Exception.Message)"
+    if ($text -match '"message"\s*:\s*"([^"]+)"') { return $Matches[1] }
+    $ErrorRecord.Exception.Message
 }
 
 # ===========================================================================
@@ -353,9 +378,12 @@ function Sync-CAAuthStrengths($Definitions) {
         $current = $existing | Where-Object { $_.displayName -eq $name } | Select-Object -First 1
         if (-not $current) {
             if ($script:Ctx.WhatIf) { $script:Ctx.AuthStrengths[$key] = New-FakeId $key; Write-CALog $step $name 'würde anlegen'; continue }
-            $new = Invoke-CAGraph -Method POST -Path '/policies/authenticationStrengthPolicies' -Body $body
-            $script:Ctx.AuthStrengths[$key] = $new.id
-            Write-CALog $step $name 'angelegt' $new.id
+            try {
+                $new = Invoke-CAGraph -Method POST -Path '/policies/authenticationStrengthPolicies' -Body $body
+                $script:Ctx.AuthStrengths[$key] = $new.id
+                Write-CALog $step $name 'angelegt' $new.id -Kind AuthStrength -ObjectId $new.id
+            }
+            catch { Write-CALog $step $name 'fehler' (Get-CAErrorText $_) }
             continue
         }
 
@@ -369,9 +397,12 @@ function Sync-CAAuthStrengths($Definitions) {
         if ($script:Ctx.WhatIf) { Write-CALog $step $name 'würde ändern' 'Kombinationen oder Beschreibung weichen ab'; continue }
 
         # Die erlaubten Kombinationen lassen sich nur über eine eigene Aktion ändern
-        Invoke-CAGraph -Method PATCH -Path "/policies/authenticationStrengthPolicies/$($current.id)" -Body @{ displayName = $name; description = $body.description } | Out-Null
-        Invoke-CAGraph -Method POST -Path "/policies/authenticationStrengthPolicies/$($current.id)/updateAllowedCombinations" -Body @{ allowedCombinations = $want } | Out-Null
-        Write-CALog $step $name 'aktualisiert'
+        try {
+            Invoke-CAGraph -Method PATCH -Path "/policies/authenticationStrengthPolicies/$($current.id)" -Body @{ displayName = $name; description = $body.description } | Out-Null
+            Invoke-CAGraph -Method POST -Path "/policies/authenticationStrengthPolicies/$($current.id)/updateAllowedCombinations" -Body @{ allowedCombinations = $want } | Out-Null
+            Write-CALog $step $name 'aktualisiert' -Kind AuthStrength -ObjectId $current.id -Before @{ description = $current.description; allowedCombinations = $have }
+        }
+        catch { Write-CALog $step $name 'fehler' (Get-CAErrorText $_) }
     }
 }
 
@@ -417,9 +448,12 @@ function Sync-CAPersonaGroups($Personas) {
         }
 
         if ($script:Ctx.WhatIf) { $script:Ctx.Groups[$p.key] = New-FakeId $name; Write-CALog $step $name 'würde anlegen'; continue }
-        $new = Invoke-CAGraph -Method POST -Path '/groups' -Body $body
-        $script:Ctx.Groups[$p.key] = $new.id
-        Write-CALog $step $name 'angelegt' $new.id
+        try {
+            $new = Invoke-CAGraph -Method POST -Path '/groups' -Body $body
+            $script:Ctx.Groups[$p.key] = $new.id
+            Write-CALog $step $name 'angelegt' $new.id -Kind Group -ObjectId $new.id
+        }
+        catch { Write-CALog $step $name 'fehler' (Get-CAErrorText $_) }
     }
 }
 
@@ -429,7 +463,7 @@ function Add-CAGroupMember([string]$GroupId, [string]$MemberId, [string]$Label, 
     if ($members -contains $MemberId) { Write-CALog $Step $Label 'unverändert' 'bereits Mitglied'; return }
     if ($script:Ctx.WhatIf) { Write-CALog $Step $Label 'würde ändern' 'zur Gruppe hinzufügen'; return }
     Invoke-CAGraph -Method POST -Path "/groups/$GroupId/members/`$ref" -Body @{ '@odata.id' = "https://graph.microsoft.com/v1.0/directoryObjects/$MemberId" } | Out-Null
-    Write-CALog $Step $Label 'aktualisiert' 'zur Gruppe hinzugefügt'
+    Write-CALog $Step $Label 'aktualisiert' 'zur Gruppe hinzugefügt' -Kind GroupMember -ObjectId $MemberId -ParentId $GroupId
 }
 
 # ===========================================================================
@@ -484,7 +518,7 @@ function Sync-CABreakglass($Definition) {
                 passwordProfile   = @{ password = $password; forceChangePasswordNextSignIn = $false }
             }
             $new = Invoke-CAGraph -Method POST -Path '/users' -Body $body
-            Write-CALog $step $upn 'angelegt' $new.id
+            Write-CALog $step $upn 'angelegt' $new.id -Kind User -ObjectId $new.id
             $created.Add([pscustomobject]@{ UserPrincipalName = $upn; Password = $password })
         }
     }
@@ -535,7 +569,7 @@ function Sync-CARestrictedAU($Definition, $Personas) {
         $body = Resolve-CANode $Definition @{} $name
         $body.displayName = $name
         $au = Invoke-CAGraph -Method POST -Path '/directory/administrativeUnits' -Body $body
-        Write-CALog $step $name 'angelegt' $au.id
+        Write-CALog $step $name 'angelegt' $au.id -Kind AdminUnit -ObjectId $au.id
     }
     else { Write-CALog $step $name 'unverändert' }
 
@@ -547,7 +581,7 @@ function Sync-CARestrictedAU($Definition, $Personas) {
         if ($members -contains $gid) { Write-CALog $step $label 'unverändert' 'bereits in der AU'; continue }
         if ($script:Ctx.WhatIf) { Write-CALog $step $label 'würde ändern' 'in die AU aufnehmen'; continue }
         Invoke-CAGraph -Method POST -Path "/directory/administrativeUnits/$($au.id)/members/`$ref" -Body @{ '@odata.id' = "https://graph.microsoft.com/v1.0/groups/$gid" } | Out-Null
-        Write-CALog $step $label 'aktualisiert' 'in die AU aufgenommen'
+        Write-CALog $step $label 'aktualisiert' 'in die AU aufgenommen' -Kind AdminUnitMember -ObjectId $gid -ParentId $au.id
     }
 }
 
@@ -659,8 +693,12 @@ function Sync-CAAuthMethods($Strengths) {
             state          = 'enabled'
             includeTargets = $newTargets.ToArray()
         }
-        Invoke-CAGraph -Method PATCH -Path $path -Body $body | Out-Null
-        Write-CALog $step $label 'aktualisiert' $detail
+        $before = [ordered]@{ '@odata.type' = $cfg['@odata.type']; state = $cfg.state; includeTargets = @($include) }
+        try {
+            Invoke-CAGraph -Method PATCH -Path $path -Body $body | Out-Null
+            Write-CALog $step $label 'aktualisiert' $detail -Kind AuthMethod -ObjectId $method -Before $before
+        }
+        catch { Write-CALog $step $label 'fehler' (Get-CAErrorText $_) }
     }
 }
 
@@ -692,10 +730,10 @@ function Sync-CAServicePrincipals($Policies) {
         if ($script:Ctx.WhatIf) { Write-CALog $step $appId 'würde anlegen' "fehlt im Tenant, verwendet in $usedBy"; continue }
         try {
             $new = Invoke-CAGraph -Method POST -Path '/servicePrincipals' -Body @{ appId = $appId }
-            Write-CALog $step "$($new.displayName) ($appId)" 'angelegt' "war nicht registriert, verwendet in $usedBy"
+            Write-CALog $step "$($new.displayName) ($appId)" 'angelegt' "war nicht registriert, verwendet in $usedBy" -Kind ServicePrincipal -ObjectId $new.id
         }
         catch {
-            Write-CALog $step $appId 'fehler' "Registrierung fehlgeschlagen: $($_.Exception.Message). Betroffen: $usedBy"
+            Write-CALog $step $appId 'fehler' "Registrierung fehlgeschlagen: $(Get-CAErrorText $_). Betroffen: $usedBy"
         }
     }
 }
@@ -737,23 +775,162 @@ function Sync-CAPolicies($Policies) {
             if ($script:Ctx.WhatIf) { Write-CALog $step $name 'würde ändern' "Status bleibt $($current.state)"; continue }
             try {
                 Invoke-CAGraph -Beta -Method PATCH -Path "/identity/conditionalAccess/policies/$($current.id)" -Body $body | Out-Null
-                Write-CALog $step $name 'aktualisiert' "Status bleibt $($current.state)"
+                Write-CALog $step $name 'aktualisiert' "Status bleibt $($current.state)" -Kind CAPolicy -ObjectId $current.id -Before $current
             }
-            catch { Write-CALog $step $name 'fehler' $_.Exception.Message }
+            catch { Write-CALog $step $name 'fehler' (Get-CAErrorText $_) }
         }
         else {
             $body.state = $stateOnCreate
             if ($script:Ctx.WhatIf) { Write-CALog $step $name 'würde anlegen' "Status $stateOnCreate"; continue }
             try {
                 $new = Invoke-CAGraph -Beta -Method POST -Path '/identity/conditionalAccess/policies' -Body $body
-                Write-CALog $step $name 'angelegt' "Status $stateOnCreate"
+                Write-CALog $step $name 'angelegt' "Status $stateOnCreate" -Kind CAPolicy -ObjectId $new.id
             }
-            catch { Write-CALog $step $name 'fehler' $_.Exception.Message }
+            catch { Write-CALog $step $name 'fehler' (Get-CAErrorText $_) }
         }
     }
 }
 
-Export-ModuleMember -Function Initialize-CAContext, Get-CAContext, Write-CALog, Save-CALog, Get-CADefinitions,
+# ===========================================================================
+# Anmeldung
+# ===========================================================================
+
+function Connect-CABaseline {
+    $tenantId = Get-CAConfigValue 'tenant.tenantId'
+    $clientId = Get-CAConfigValue 'tenant.deployerAppClientId'
+    $connect  = @{ TenantId = $tenantId; Scopes = (Get-CARequiredScopes); NoWelcome = $true }
+    if ($clientId -and $clientId -ne '00000000-0000-0000-0000-000000000000') { $connect.ClientId = $clientId }
+    else { Write-Warning 'Keine deployerAppClientId in der Config. Anmeldung über die Standard-App "Microsoft Graph Command Line Tools".' }
+
+    Connect-MgGraph @connect
+    $ctx = Get-MgContext
+    if ($ctx.TenantId -ne $tenantId) { throw "Angemeldet im Tenant $($ctx.TenantId), die Config gehört zu $tenantId. Abbruch." }
+    Write-Host "Angemeldet als $($ctx.Account) im Tenant $($ctx.TenantId)" -ForegroundColor Cyan
+}
+
+# ===========================================================================
+# Rücknahme eines Deployments anhand seines Protokolls
+# ===========================================================================
+
+function Get-CAHttpStatus($ErrorRecord) {
+    $status = $null
+    try { $status = [int]$ErrorRecord.Exception.Response.StatusCode } catch { }
+    if (-not $status -and (Get-CAErrorText $ErrorRecord) -match '\b(404|NotFound|Request_ResourceNotFound)\b') { $status = 404 }
+    $status
+}
+
+$script:DeletePaths = @{
+    CAPolicy         = @{ Path = '/identity/conditionalAccess/policies/{0}'; Beta = $true }
+    NamedLocation    = @{ Path = '/identity/conditionalAccess/namedLocations/{0}' }
+    AuthStrength     = @{ Path = '/policies/authenticationStrengthPolicies/{0}' }
+    Group            = @{ Path = '/groups/{0}'; Purge = $true }
+    User             = @{ Path = '/users/{0}'; Purge = $true }
+    AdminUnit        = @{ Path = '/directory/administrativeUnits/{0}'; Purge = $true }
+    ServicePrincipal = @{ Path = '/servicePrincipals/{0}' }
+}
+
+# Ältere Protokolle kennen Kind und ObjectId noch nicht. Dann steht die ID im Detail.
+$script:StepToKind = @{
+    'Named Locations' = 'NamedLocation'; 'Authentifizierungsstärken' = 'AuthStrength'; 'Persona-Gruppen' = 'Group'
+    'Breakglass' = 'User'; 'Restricted AU' = 'AdminUnit'
+}
+
+# Liefert die Schritte, die eine Rücknahme ausführen würde, neueste Änderung zuerst
+function Get-CAUndoPlan([object[]]$Entries) {
+    $guid = '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$'
+    # Neueste zuerst. Innerhalb derselben Sekunde entscheidet die Reihenfolge im Protokoll.
+    $i = 0
+    $ordered = $Entries | ForEach-Object { [pscustomobject]@{ E = $_; Idx = $i++ } } |
+        Sort-Object @{ Expression = { $_.E.Time }; Descending = $true }, @{ Expression = 'Idx'; Descending = $true } |
+        ForEach-Object E
+    $plan = foreach ($e in $ordered) {
+        if ($e.Action -notin 'angelegt', 'aktualisiert') { continue }
+        $kind = $e.PSObject.Properties['Kind'] ? $e.Kind : $null
+        $id   = $e.PSObject.Properties['ObjectId'] ? $e.ObjectId : $null
+        if (-not $kind -and $e.Action -eq 'angelegt' -and $e.Detail -match $guid) {
+            $kind = $script:StepToKind[$e.Step]; $id = $e.Detail
+        }
+        if (-not $kind) {
+            [pscustomobject]@{ Op = 'manuell'; Kind = ''; Id = ''; ParentId = ''; Object = $e.Object; Before = $null; Note = "Kein Objekttyp im Protokoll ($($e.Step))" }
+            continue
+        }
+        $op = switch ($true) {
+            ($e.Action -eq 'angelegt')                    { 'löschen'; break }
+            ($kind -in 'GroupMember', 'AdminUnitMember')   { 'Mitglied entfernen'; break }
+            ($kind -in 'AuthMethod', 'AuthStrength')       { 'zurücksetzen'; break }
+            default                                        { 'manuell' }
+        }
+        $note = if ($op -eq 'manuell') { 'Änderung an bestehendem Objekt, vorheriger Stand steht im Protokoll (Before)' } else { '' }
+        [pscustomobject]@{
+            Op = $op; Kind = $kind; Id = $id; ParentId = ($e.PSObject.Properties['ParentId'] ? $e.ParentId : '')
+            Object = $e.Object; Before = ($e.PSObject.Properties['Before'] ? $e.Before : $null); Note = $note
+        }
+    }
+
+    # Mitgliedschaften in Objekten, die ohnehin gelöscht werden, muss niemand einzeln entfernen
+    $deleted = @($plan | Where-Object Op -eq 'löschen' | ForEach-Object Id)
+    @($plan | Where-Object { -not ($_.Op -eq 'Mitglied entfernen' -and ($deleted -contains $_.ParentId -or $deleted -contains $_.Id)) })
+}
+
+function Invoke-CAUndo([object[]]$Plan, [switch]$Purge) {
+    $step = 'Rücknahme'
+    $purgeIds = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($p in $Plan) {
+        $label = "$($p.Kind) $($p.Object)"
+        if ($p.Op -eq 'manuell') { Write-CALog $step $label 'warnung' $p.Note; continue }
+        if ($script:Ctx.WhatIf) { Write-CALog $step $label 'würde ändern' $p.Op; continue }
+        try {
+            switch ($p.Op) {
+                'löschen' {
+                    $d = $script:DeletePaths[$p.Kind]
+                    if ($p.Kind -eq 'NamedLocation') {
+                        # Vertrauenswürdige IP-Locations lassen sich erst löschen, wenn die Markierung weg ist
+                        $nl = Invoke-CAGraph -Path "/identity/conditionalAccess/namedLocations/$($p.Id)"
+                        if ($nl['isTrusted']) {
+                            Invoke-CAGraph -Method PATCH -Path "/identity/conditionalAccess/namedLocations/$($p.Id)" -Body @{ '@odata.type' = $nl['@odata.type']; isTrusted = $false } | Out-Null
+                        }
+                    }
+                    Invoke-CAGraph -Method DELETE -Path ($d['Path'] -f $p.Id) -Beta:([bool]$d['Beta']) | Out-Null
+                    if ($d['Purge']) { $purgeIds.Add($p.Id) }
+                }
+                'Mitglied entfernen' {
+                    $container = if ($p.Kind -eq 'GroupMember') { 'groups' } else { 'directory/administrativeUnits' }
+                    Invoke-CAGraph -Method DELETE -Path "/$container/$($p.ParentId)/members/$($p.Id)/`$ref" | Out-Null
+                }
+                'zurücksetzen' {
+                    if ($p.Kind -eq 'AuthMethod') {
+                        $body = [ordered]@{ '@odata.type' = $p.Before.'@odata.type'; state = $p.Before.state; includeTargets = @($p.Before.includeTargets) }
+                        Invoke-CAGraph -Method PATCH -Path "/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/$($p.Id)" -Body $body | Out-Null
+                    }
+                    else {
+                        Invoke-CAGraph -Method PATCH -Path "/policies/authenticationStrengthPolicies/$($p.Id)" -Body @{ description = $p.Before.description } | Out-Null
+                        Invoke-CAGraph -Method POST -Path "/policies/authenticationStrengthPolicies/$($p.Id)/updateAllowedCombinations" -Body @{ allowedCombinations = @($p.Before.allowedCombinations) } | Out-Null
+                    }
+                }
+            }
+            Write-CALog $step $label 'aktualisiert' $p.Op
+        }
+        catch {
+            if ((Get-CAHttpStatus $_) -eq 404) { Write-CALog $step $label 'unverändert' 'nicht mehr vorhanden' }
+            else { Write-CALog $step $label 'fehler' (Get-CAErrorText $_) }
+        }
+    }
+
+    # Gelöschte Gruppen, Benutzer und AUs liegen 30 Tage im Papierkorb. -Purge entfernt sie endgültig.
+    if ($Purge -and $purgeIds.Count -and -not $script:Ctx.WhatIf) {
+        Start-Sleep -Seconds 5
+        foreach ($id in $purgeIds) {
+            try {
+                Invoke-CAGraph -Method DELETE -Path "/directory/deletedItems/$id" | Out-Null
+                Write-CALog $step $id 'aktualisiert' 'endgültig gelöscht'
+            }
+            catch { Write-CALog $step $id 'warnung' "endgültiges Löschen nicht möglich: $(Get-CAErrorText $_)" }
+        }
+    }
+}
+
+Export-ModuleMember -Function Connect-CABaseline, Get-CAUndoPlan, Invoke-CAUndo, Initialize-CAContext, Get-CAContext, Write-CALog, Save-CALog, Get-CADefinitions,
     Get-CAConfigValue, Select-CAPolicies, Sync-CANamedLocations, Sync-CAAuthStrengths, Sync-CAPersonaGroups,
     Sync-CABreakglass, Sync-CARestrictedAU, Sync-CAAuthMethods, Sync-CAServicePrincipals, Sync-CAPolicies,
     Read-CAJson, Get-CARequiredScopes

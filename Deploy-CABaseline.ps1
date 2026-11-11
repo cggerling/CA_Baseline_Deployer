@@ -68,20 +68,7 @@ $defs     = Get-CADefinitions
 $policies = @(Select-CAPolicies $defs.Policies $PolicyKey)
 $run      = { param($name) -not $Steps -or $Steps -contains $name }
 
-$scopes = Get-CARequiredScopes
-
-if (-not $ValidateOnly) {
-    $tenantId = Get-CAConfigValue 'tenant.tenantId'
-    $clientId = Get-CAConfigValue 'tenant.deployerAppClientId'
-    $connect  = @{ TenantId = $tenantId; Scopes = $scopes; NoWelcome = $true }
-    if ($clientId -and $clientId -ne '00000000-0000-0000-0000-000000000000') { $connect.ClientId = $clientId }
-    else { Write-Warning 'Keine deployerAppClientId in der Config. Anmeldung über die Standard-App "Microsoft Graph Command Line Tools".' }
-
-    Connect-MgGraph @connect
-    $ctx = Get-MgContext
-    if ($ctx.TenantId -ne $tenantId) { throw "Angemeldet im Tenant $($ctx.TenantId), die Config gehört zu $tenantId. Abbruch." }
-    Write-Host "Angemeldet als $($ctx.Account) im Tenant $($ctx.TenantId)" -ForegroundColor Cyan
-}
+if (-not $ValidateOnly) { Connect-CABaseline }
 
 if ($WhatIfPreference) { Write-Host '*** WhatIf: Es wird nichts geändert. ***' -ForegroundColor Magenta }
 if ($ValidateOnly)     { Write-Host '*** Nur Prüfung, keine Verbindung zum Tenant. ***' -ForegroundColor Magenta }
