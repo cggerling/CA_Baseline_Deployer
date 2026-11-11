@@ -89,7 +89,7 @@ Kundeneingaben sind Werte, die nur der Kunde kennt:
 
 - #210 Token Protection braucht die Namen der Autopilot-Enrollment-Profile. Sie werden im Gerätefilter ausgenommen. Fehlen sie in der Config, fragt der Deployer nach; mit `-` lässt sich die Liste bewusst leer lassen.
 - Trusted Networks und Corporate Sites brauchen die öffentlichen IP-Bereiche. Bis sie eingetragen sind, steht dort `192.0.2.1/32` aus dem Dokumentationsbereich TEST-NET-1 (RFC 5737), weil Graph keine leere IP-Location annimmt. Der Deployer warnt, solange der Platzhalter verwendet wird.
-- Die Reiseausnahme `NL-Global-Travel_Exception-Country_IP` braucht mindestens ein Land. Ist die Liste leer, wird die Location übersprungen, weil Graph eine Länder-Location ohne Länder ablehnt.
+- Die Reiseausnahme `NL-Global-Travel_Exception-Country_IP` braucht die Länder, für die Reiseausnahmen gelten. Graph lehnt eine Länder-Location ohne Länder ab, deshalb steht dort bis zur echten Angabe `DE` als Platzhalter, ebenfalls mit Warnung.
 
 ## Ablauf eines Deployments
 

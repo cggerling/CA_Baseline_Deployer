@@ -6,13 +6,16 @@
         "name": "countriesAndRegions",
         "type": "countryList",
         "required": false,
-        "hint": "Länder für Reiseausnahmen (ISO-3166-Codes, z. B. US). Bleibt die Liste leer, wird die Location ohne Länder angelegt."
+        "placeholder": "DE",
+        "hint": "Länder für Reiseausnahmen (ISO-3166-Codes, z. B. US). DE steht nur als Platzhalter drin, weil Graph keine Länder-Location ohne Länder annimmt. Der Deployer warnt, solange der Platzhalter verwendet wird."
       }
     ]
   },
   "@odata.type": "#microsoft.graph.countryNamedLocation",
   "displayName": "NL-Global-Travel_Exception-Country_IP",
-  "countriesAndRegions": [],
+  "countriesAndRegions": [
+    "DE"
+  ],
   "includeUnknownCountriesAndRegions": false,
   "countryLookupMethod": "clientIpAddress"
 }

@@ -305,22 +305,29 @@ function Sync-CANamedLocations($Definitions) {
         $body = Resolve-CANode $def @{} $def.displayName
         $name = $body.displayName
 
-        # Kundeneingaben aus der Config übernehmen
+        # Kundeneingaben aus der Config übernehmen. Ohne Eingabe bleibt der Platzhalter aus der Vorlage
+        # stehen (192.0.2.1/32 bzw. DE), weil Graph keine leeren Locations annimmt.
         $override = Get-CAConfigValue "inputs.namedLocations.$name"
+        $provided = @()
         if ($override) {
             if ($override.Contains('ipRanges') -and @($override.ipRanges).Count) {
                 $body.ipRanges = @($override.ipRanges | ForEach-Object {
                     $type = if ($_ -match ':') { '#microsoft.graph.iPv6CidrRange' } else { '#microsoft.graph.iPv4CidrRange' }
                     [ordered]@{ '@odata.type' = $type; cidrAddress = $_ }
                 })
+                $provided += 'ipRanges'
             }
             if ($override.Contains('countriesAndRegions') -and @($override.countriesAndRegions).Count) {
                 $body.countriesAndRegions = @($override.countriesAndRegions)
+                $provided += 'countriesAndRegions'
             }
         }
-        $placeholder = $def._deployer.Contains('customerInput') -and
-                       ($def._deployer.customerInput | Where-Object { $_.Contains('placeholder') -and ($body.ipRanges.cidrAddress -contains $_.placeholder) })
-        if ($placeholder) { Write-CALog $step $name 'warnung' 'enthält noch den Platzhalter 192.0.2.1/32, bitte echte IP-Bereiche in der Config eintragen' }
+        $inputDefs = if ($def._deployer.Contains('customerInput')) { @($def._deployer.customerInput) } else { @() }
+        foreach ($in in $inputDefs) {
+            if ($in.Contains('placeholder') -and $provided -notcontains $in.name) {
+                Write-CALog $step $name 'warnung' "enthält noch den Platzhalter $($in.placeholder). Echte Werte unter inputs.namedLocations in der Config eintragen."
+            }
+        }
 
         # Graph nimmt keine Länder-Location ohne Länder an. Sie wird übersprungen, und Policies,
         # die darauf verweisen, melden das später selbst.
