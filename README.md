@@ -39,7 +39,7 @@ Mit `-PolicyKey '1*'` lassen sich einzelne Policies ausrollen, mit `-Steps` einz
 .\Undo-CABaseline.ps1 -ConfigPath .\config\tenants\kunde.json -LogPath .\Logs\<Protokoll>.json
 ```
 
-Angelegte Objekte werden gelöscht, hinzugefügte Mitgliedschaften entfernt. Authentifizierungsmethoden und Stärken bekommen ihren vorherigen Stand zurück. Vertrauenswürdige Named Locations verlieren vor dem Löschen ihre Markierung, sonst lehnt Graph das Löschen ab. Policies und Named Locations, die es vorher schon gab und die der Lauf nur geändert hat, setzt das Skript nicht automatisch zurück; es meldet sie, und der alte Stand steht im Protokoll unter `Before`.
+Angelegte Objekte werden gelöscht, hinzugefügte Mitgliedschaften vorher entfernt. Das ist nötig, weil Mitglieder einer role-assignable Group als privilegiert gelten und sich mit den Rechten der App erst löschen lassen, wenn sie nicht mehr in der Gruppe sind. Authentifizierungsmethoden und Stärken bekommen ihren vorherigen Stand zurück. Vertrauenswürdige Named Locations verlieren vor dem Löschen ihre Markierung, sonst lehnt Graph das Löschen ab. Policies und Named Locations, die es vorher schon gab und die der Lauf nur geändert hat, setzt das Skript nicht automatisch zurück; es meldet sie, und der alte Stand steht im Protokoll unter `Before`.
 
 Gelöschte Gruppen, Benutzer und die AU liegen 30 Tage im Papierkorb. Mit `-Purge` werden sie endgültig entfernt, was für Testtenants praktisch ist, damit ein neuer Lauf sauber startet. Vor dem Ausführen zeigt das Skript die Liste und verlangt die Eingabe `JA`.
 
@@ -108,7 +108,7 @@ Admins, Breakglass und ServiceAccounts sind role-assignable Groups. Damit könne
 
 Bei den Breakglass-Konten fragt der Deployer zuerst nach vorhandenen Konten, sofern `breakglassAccounts` in der Config leer ist. Gibt es keine, legt er `emergency_access_01` und `emergency_access_02` auf der onmicrosoft.com-Domäne an. Die Kennwörter erscheinen genau einmal in der Konsole und landen nicht im Protokoll. Danach nimmt er die Konten in die Breakglass-Gruppe auf. Rollen und eigene Breakglass-Policies kommen in einer späteren Version.
 
-Die Restricted Management AU kommt nach den Breakglass-Konten dran. Liegt eine Gruppe erst einmal in der AU, können tenant-weite Admins ihre Mitglieder nicht mehr ändern, auch Global Admins nicht.
+Die Restricted Management AU legt der Deployer leer an. Liegt eine Gruppe erst einmal in der AU, können tenant-weite Admins ihre Mitglieder nicht mehr ändern, auch Global Admins nicht. Der Kunde nimmt Admins, Breakglass und ServiceAccounts deshalb selbst auf, sobald die Mitglieder gepflegt sind. Welche Gruppen vorgesehen sind, steht im Protokoll.
 
 Bei den Authentifizierungsmethoden fasst der Deployer nur Methoden an, die eine Stärke braucht und die im Tenant deaktiviert sind. Die schaltet er für die Persona-Gruppen ein; Ziele, die noch in der deaktivierten Methode hinterlegt waren, übernimmt er nicht. Aktivierte Methoden bleiben komplett unverändert, auch ihre Ziele. Fehlen dort Persona-Gruppen, steht das als Warnung im Protokoll. Die Registrierungskampagne rührt der Deployer nicht an. Passkeys (FIDO2) bekommt nur die Persona Admins (`authenticationMethods.passkeyPersonas`). Windows Hello for Business wird in Intune konfiguriert. Für die zertifikatbasierte Anmeldung braucht der Kunde eine hinterlegte Zertifizierungsstelle, deshalb prüft der Deployer dort nur und warnt.
 

@@ -8,7 +8,7 @@
       2. Authentifizierungsstärken
       3. Persona-Gruppen
       4. Breakglass-Konten (vorhandene übernehmen oder zwei neue anlegen) und Gruppenmitgliedschaft
-      5. Restricted Management AU mit den geschützten Persona-Gruppen
+      5. Restricted Management AU (leer, die Gruppen nimmt der Kunde später selbst auf)
       6. Authentifizierungsmethoden, die die Stärken brauchen (nur ergänzend)
       7. Service Principals der Microsoft-Apps, auf die Policies verweisen
       8. CA-Policies

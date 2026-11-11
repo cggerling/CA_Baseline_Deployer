@@ -239,7 +239,8 @@ function Resolve-CAInput([System.Collections.IDictionary]$InputDef, [string]$Own
             Write-Host "  $($InputDef.hint)"
             $answer = Read-CAInput 'Werte kommagetrennt eingeben, "-" für bewusst leer, Enter zum Überspringen der Policy'
             if ([string]::IsNullOrWhiteSpace($answer)) { return $null }
-            $values = if ($answer.Trim() -eq '-') { @() } else { @($answer -split ',' | ForEach-Object Trim | Where-Object { $_ }) }
+            # @() außen herum: Ein if-Ausdruck mit leerer Liste liefert sonst $null
+            $values = @(if ($answer.Trim() -ne '-') { $answer -split ',' | ForEach-Object Trim | Where-Object { $_ } })
         }
     }
 
@@ -561,7 +562,7 @@ function Sync-CARestrictedAU($Definition, $Personas) {
     $protected = @($Personas | Where-Object { $_.restrictedAdministrativeUnit })
 
     if ($script:Ctx.ValidateOnly) {
-        Write-CALog $step $name 'info' ("Mitglieder: " + (($protected | ForEach-Object { Get-PersonaGroupName $_.key }) -join ', '))
+        Write-CALog $step $name 'info' ("wird leer angelegt. Später aufnehmen: " + (($protected | ForEach-Object { Get-PersonaGroupName $_.key }) -join ', '))
         return
     }
 
@@ -580,16 +581,11 @@ function Sync-CARestrictedAU($Definition, $Personas) {
     }
     else { Write-CALog $step $name 'unverändert' }
 
-    $members = @(Invoke-CAGraph -Path "/directory/administrativeUnits/$($au.id)/members?`$select=id" -All | ForEach-Object { $_.id })
-    foreach ($p in $protected) {
-        $gid   = $script:Ctx.Groups[$p.key]
-        $label = Get-PersonaGroupName $p.key
-        if (Test-FakeId $gid) { Write-CALog $step $label 'würde ändern' 'in die AU aufnehmen'; continue }
-        if ($members -contains $gid) { Write-CALog $step $label 'unverändert' 'bereits in der AU'; continue }
-        if ($script:Ctx.WhatIf) { Write-CALog $step $label 'würde ändern' 'in die AU aufnehmen'; continue }
-        Invoke-CAGraph -Method POST -Path "/directory/administrativeUnits/$($au.id)/members/`$ref" -Body @{ '@odata.id' = "https://graph.microsoft.com/v1.0/groups/$gid" } | Out-Null
-        Write-CALog $step $label 'aktualisiert' 'in die AU aufgenommen' -Kind AdminUnitMember -ObjectId $gid -ParentId $au.id
-    }
+    # Die AU bleibt leer. Liegen die Gruppen erst in der AU, können tenant-weite Admins ihre
+    # Mitglieder nicht mehr pflegen. Deshalb nimmt der Kunde sie selbst auf, sobald die
+    # Mitglieder stehen.
+    $intended = ($protected | ForEach-Object { Get-PersonaGroupName $_.key }) -join ', '
+    Write-CALog $step $name 'info' "bleibt leer. Später aufnehmen: $intended"
 }
 
 # ===========================================================================
@@ -874,9 +870,11 @@ function Get-CAUndoPlan([object[]]$Entries) {
         }
     }
 
-    # Mitgliedschaften in Objekten, die ohnehin gelöscht werden, muss niemand einzeln entfernen
-    $deleted = @($plan | Where-Object Op -eq 'löschen' | ForEach-Object Id)
-    @($plan | Where-Object { -not ($_.Op -eq 'Mitglied entfernen' -and ($deleted -contains $_.ParentId -or $deleted -contains $_.Id)) })
+    # Mitgliedschaften werden immer einzeln entfernt, auch wenn der Container danach gelöscht wird:
+    # Mitglieder einer role-assignable Group gelten als privilegiert und lassen sich mit
+    # User.ReadWrite.All erst löschen, wenn sie nicht mehr in der Gruppe sind. Und Gruppen in einer
+    # Restricted AU bleiben nach dem Löschen der AU noch eine Weile gesperrt.
+    @($plan)
 }
 
 function Invoke-CAUndo([object[]]$Plan, [switch]$Purge) {
@@ -919,8 +917,12 @@ function Invoke-CAUndo([object[]]$Plan, [switch]$Purge) {
             Write-CALog $step $label 'aktualisiert' $p.Op
         }
         catch {
+            $text = Get-CAErrorText $_
             if ((Get-CAHttpStatus $_) -eq 404) { Write-CALog $step $label 'unverändert' 'nicht mehr vorhanden' }
-            else { Write-CALog $step $label 'fehler' (Get-CAErrorText $_) }
+            elseif ($text -match 'restricted management administrative unit') {
+                Write-CALog $step $label 'fehler' 'liegt (noch) in einer Restricted AU. Kurz nach dem Löschen der AU ist das normal: Undo nach ein paar Minuten einfach noch einmal starten.'
+            }
+            else { Write-CALog $step $label 'fehler' $text }
         }
     }
 
