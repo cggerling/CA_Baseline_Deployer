@@ -2,7 +2,7 @@
 
 Mit diesem Repo wird ein Conditional-Access-Framework für Entra ID per Code in Kundentenants ausgerollt. Dazu gehören Persona-Gruppen, Breakglass-Konten, eine Restricted Management Administrative Unit, Named Locations, Authentifizierungsstärken und die CA-Policies selbst. Die Authentifizierungsmethoden ergänzt der Deployer nur so weit, wie die Stärken sie brauchen.
 
-> Stand: Der Deployer ist offline gegen alle Vorlagen geprüft (`-ValidateOnly`). Gegen einen echten Tenant ist er noch nicht gelaufen. Vor dem ersten Kunden gehört ein Durchlauf mit `-WhatIf` und danach ein echter Lauf in einem Testtenant dazu.
+> Die Nutzung erfolgt auf eigene Verantwortung. Vor dem Einsatz bitte den [Haftungsausschluss](DISCLAIMER.md) lesen. CA-Policies können bei falscher Konfiguration alle Benutzer eines Tenants aussperren, deshalb gehört vor jedem produktiven Einsatz ein Durchlauf in einem Testtenant dazu.
 
 ## Schnellstart
 
@@ -47,6 +47,8 @@ Gelöschte Gruppen, Benutzer und die AU liegen 30 Tage im Papierkorb. Mit `-Purg
 
 ```
 Deploy-CABaseline.ps1          Einstiegspunkt
+Undo-CABaseline.ps1            nimmt ein Deployment anhand seines Protokolls zurück
+DISCLAIMER.md                  Haftungsausschluss
 config/
   tenant.example.json          Vorlage für eine Kunden-Config
   tenants/                     echte Kunden-Configs, nur lokal (.gitignore)
@@ -62,7 +64,6 @@ Sources/                       Rohexporte aus dem Referenztenant und id-mapping.
 tools/
   ConvertFrom-CAExport.ps1     macht aus Exporten tenantneutrale Vorlagen
   New-DeployerApp.ps1          legt die App-Registrierung im Kundentenant an
-Undo-CABaseline.ps1            nimmt ein Deployment anhand seines Protokolls zurück
   Remove-DeployerApp.ps1       deaktiviert oder löscht sie wieder
 ```
 
