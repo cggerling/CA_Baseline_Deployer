@@ -49,8 +49,18 @@ function Initialize-CAContext {
         NamedLocations = @{}      # Name -> Objekt-ID
         AuthStrengths  = @{}      # Schlüssel -> Objekt-ID
         Log            = [System.Collections.Generic.List[object]]::new()
+        LogPath        = $null    # gesetzt über Start-CALog, dann wird nach jedem Eintrag gespeichert
         FakeCounter    = 0
     }
+}
+
+# Legt die Protokolldatei gleich zu Beginn an. Ab dann landet jeder Eintrag sofort auf der Platte.
+# Bricht ein Lauf hart ab (Fenster geschlossen, Strg+C bei einer Rückfrage), steht im Protokoll
+# trotzdem alles, was bis dahin angelegt wurde, und Undo-CABaseline.ps1 kann damit arbeiten.
+function Start-CALog {
+    param([Parameter(Mandatory)] [string]$Path)
+    $script:Ctx.LogPath = $Path
+    Save-CALog $Path
 }
 
 function Get-CAContext { $script:Ctx }
@@ -75,6 +85,10 @@ function Write-CALog {
         Time = (Get-Date).ToString('s'); Step = $Step; Object = $Object; Action = $Action; Detail = $Detail
         Kind = $Kind; ObjectId = $ObjectId; ParentId = $ParentId; Before = $Before
     })
+    if ($script:Ctx.LogPath) {
+        try { Save-CALog $script:Ctx.LogPath }
+        catch { Write-Warning "Protokoll konnte nicht gespeichert werden: $($_.Exception.Message)" }
+    }
     $color = switch ($Action) {
         'angelegt'      { 'Green' }
         'aktualisiert'  { 'Green' }
@@ -93,7 +107,10 @@ function Save-CALog {
     param([Parameter(Mandatory)] [string]$Path)
     $dir = Split-Path $Path -Parent
     if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
-    $script:Ctx.Log | ConvertTo-Json -Depth 30 | Set-Content -Path $Path -Encoding utf8
+    # Erst in eine Temp-Datei, dann austauschen. So liegt nie eine halb geschriebene Datei da.
+    $tmp = "$Path.tmp"
+    ConvertTo-Json -InputObject @($script:Ctx.Log) -Depth 30 | Set-Content -Path $tmp -Encoding utf8
+    Move-Item -Path $tmp -Destination $Path -Force
 }
 
 # Fragt interaktiv nach. Im nicht-interaktiven Modus kommt $null zurück.
@@ -939,7 +956,7 @@ function Invoke-CAUndo([object[]]$Plan, [switch]$Purge) {
     }
 }
 
-Export-ModuleMember -Function Connect-CABaseline, Get-CAUndoPlan, Invoke-CAUndo, Initialize-CAContext, Get-CAContext, Write-CALog, Save-CALog, Get-CADefinitions,
+Export-ModuleMember -Function Connect-CABaseline, Get-CAUndoPlan, Invoke-CAUndo, Initialize-CAContext, Get-CAContext, Write-CALog, Save-CALog, Start-CALog, Get-CADefinitions,
     Get-CAConfigValue, Select-CAPolicies, Sync-CANamedLocations, Sync-CAAuthStrengths, Sync-CAPersonaGroups,
     Sync-CABreakglass, Sync-CARestrictedAU, Sync-CAAuthMethods, Sync-CAServicePrincipals, Sync-CAPolicies,
     Read-CAJson, Get-CARequiredScopes

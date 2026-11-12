@@ -67,13 +67,15 @@ if (-not $WhatIfPreference -and -not $Force) {
     if ($answer -cne 'JA') { Write-Host 'Abgebrochen.' -ForegroundColor Yellow; return }
 }
 
+$tenantLabel = (Get-CAConfigValue 'tenant.primaryDomain' 'tenant') -replace '[^\w\.-]', '_'
+$undoLog = Join-Path $repoRoot ("Logs/undo-{0}-{1:yyyyMMdd-HHmmss}.json" -f $tenantLabel, (Get-Date))
+Start-CALog $undoLog
+
 Connect-CABaseline
 if ($WhatIfPreference) { Write-Host '*** WhatIf: Es wird nichts geändert. ***' -ForegroundColor Magenta }
 
 try { Invoke-CAUndo $plan -Purge:$Purge }
 finally {
-    $tenantLabel = (Get-CAConfigValue 'tenant.primaryDomain' 'tenant') -replace '[^\w\.-]', '_'
-    $undoLog = Join-Path $repoRoot ("Logs/undo-{0}-{1:yyyyMMdd-HHmmss}.json" -f $tenantLabel, (Get-Date))
     Save-CALog $undoLog
 
     $log = (Get-CAContext).Log

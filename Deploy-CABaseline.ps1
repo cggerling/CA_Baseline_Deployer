@@ -16,7 +16,8 @@
     Jeder Schritt gleicht mit dem Tenant ab. Neue Policies starten mit dem Status aus
     policies.stateOnCreate (Standard: Nur Bericht). Bei bestehenden Policies bleibt der Status unverändert.
 
-    Das Protokoll landet in Logs/<Tenant>-<Zeitstempel>.json. Kennwörter neuer
+    Das Protokoll landet in Logs/<Tenant>-<Zeitstempel>.json. Es wird nach jedem Eintrag
+    gespeichert, damit es auch einen abgebrochenen Lauf vollständig enthält. Kennwörter neuer
     Breakglass-Konten stehen nur einmal in der Konsole und nie im Protokoll.
 
 .PARAMETER ConfigPath
@@ -68,6 +69,11 @@ $defs     = Get-CADefinitions
 $policies = @(Select-CAPolicies $defs.Policies $PolicyKey)
 $run      = { param($name) -not $Steps -or $Steps -contains $name }
 
+# Das Protokoll wird ab hier nach jedem Eintrag gespeichert, nicht erst am Ende.
+$tenantLabel = (Get-CAConfigValue 'tenant.primaryDomain' 'tenant') -replace '[^\w\.-]', '_'
+$logPath = Join-Path $repoRoot ("Logs/{0}-{1:yyyyMMdd-HHmmss}.json" -f $tenantLabel, (Get-Date))
+Start-CALog $logPath
+
 if (-not $ValidateOnly) { Connect-CABaseline }
 
 if ($WhatIfPreference) { Write-Host '*** WhatIf: Es wird nichts geändert. ***' -ForegroundColor Magenta }
@@ -99,8 +105,6 @@ try {
 }
 finally {
     $log = (Get-CAContext).Log
-    $tenantLabel = (Get-CAConfigValue 'tenant.primaryDomain' 'tenant') -replace '[^\w\.-]', '_'
-    $logPath = Join-Path $repoRoot ("Logs/{0}-{1:yyyyMMdd-HHmmss}.json" -f $tenantLabel, (Get-Date))
     Save-CALog $logPath
 
     Write-Host "`n=== Zusammenfassung ===" -ForegroundColor White

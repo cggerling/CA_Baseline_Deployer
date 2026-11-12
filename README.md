@@ -28,7 +28,7 @@ Mit diesem Repo wird ein Conditional-Access-Framework für Entra ID per Code in 
    .\tools\Remove-DeployerApp.ps1 -TenantId <Tenant-ID>
    ```
 
-Mit `-PolicyKey '1*'` lassen sich einzelne Policies ausrollen, mit `-Steps` einzelne Schritte. Jeder Lauf schreibt ein Protokoll nach `Logs/` (nicht im Repo).
+Mit `-PolicyKey '1*'` lassen sich einzelne Policies ausrollen, mit `-Steps` einzelne Schritte. Jeder Lauf schreibt ein Protokoll nach `Logs/` (nicht im Repo). Die Datei entsteht gleich beim Start und wird nach jedem Eintrag gespeichert. Wird das Fenster mitten im Lauf geschlossen, steht trotzdem alles drin, was bis dahin angelegt wurde, und der Undo funktioniert damit.
 
 ## Deployment zurücknehmen
 
