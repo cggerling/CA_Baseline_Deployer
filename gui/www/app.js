@@ -571,7 +571,7 @@ const STEPS = [
         help('Die App gibt es schon / Client-ID von Hand eintragen',
           h('p', {}, 'Nur nötig, wenn die App außerhalb des Assistenten angelegt wurde. Die Client-ID steht in Entra ID > App-Registrierungen > CA Baseline Deployer > Übersicht unter „Anwendungs-ID (Client)“.'),
           field('Client-ID', manual.el)),
-        h('p', { class: 'small muted' }, 'Nach Projektende die App mit tools/Remove-DeployerApp.ps1 deaktivieren oder löschen.')
+        h('p', { class: 'small muted' }, 'Wenn du fertig bist, kannst du die App im Schritt „Zurücknehmen“ wieder löschen.')
       ];
     }
   },
@@ -1037,7 +1037,8 @@ const STEPS = [
           h('div', { class: 'actions' },
             h('button', { class: 'secondary', type: 'button', onclick: () => runUndo('whatif') }, 'Probelauf der Rücknahme'),
             h('button', { class: 'danger', type: 'button', onclick: () => runUndo('live') }, 'Zurücknehmen'))),
-        panel.el, sum
+        panel.el, sum,
+        removeAppCard()
       ];
     }
   }
@@ -1046,6 +1047,25 @@ const STEPS = [
 // ---------------------------------------------------------------------------
 // Hilfen für Schritte
 // ---------------------------------------------------------------------------
+
+// Löscht die App-Registrierung "CA Baseline Deployer" im Tenant, als letzter Schritt nach dem Test
+function removeAppCard() {
+  const panel = jobPanel('Deployer-App löschen');
+  const run = () => {
+    if (!confirm('Die App-Registrierung „CA Baseline Deployer“ im Tenant löschen? Danach kann sich niemand mehr über sie anmelden. Sie liegt noch 30 Tage im Papierkorb von Entra ID.')) return;
+    panel.run({ type: 'removeapp', config: S.cfgName }, c => {
+      if (c === 0) { cfgSet('tenant.deployerAppClientId', zeroGuid); renderNav(); }
+    });
+  };
+  return [
+    h('div', { class: 'card' },
+      h('h2', {}, 'Deployer-App löschen'),
+      h('p', {}, 'Mach das erst, wenn du nichts mehr ausrollen oder zurücknehmen willst. Deployment und Rücknahme melden sich über diese App an. Ohne sie musst du die App im Schritt „App-Registrierung“ neu anlegen.'),
+      h('p', { class: 'small muted' }, 'Die Anmeldung läuft hier über die Standard-App von Microsoft Graph und braucht die Rolle Cloud Application Administrator oder Global Administrator. Das Anmeldefenster erscheint über dem Konsolenfenster der Oberfläche.'),
+      h('div', { class: 'actions' }, h('button', { class: 'danger', type: 'button', onclick: run }, 'Deployer-App löschen'))),
+    panel.el
+  ];
+}
 const personaLabel = key => String((cfgGet('naming.personaLabels', {}) || {})[key] || key).trim();
 function groupNameFromPattern(key, parent) {
   const label = parent ? `${personaLabel(parent)}-${personaLabel(key)}` : personaLabel(key);

@@ -8,9 +8,13 @@ Fertig ist dein Conditional Access damit nicht. Die Policies starten im Modus �
 
 ## Weboberfläche
 
+Doppelklick auf `CA-Baseline-Deployer starten.cmd` im Repo-Ordner, oder in PowerShell 7:
+
 ```powershell
 .\Start-CABaselineGui.ps1
 ```
+
+Wie jemand ohne Kommandozeile vom ersten Download bis zum Aufräumen kommt, steht in der [Testanleitung](docs/Testanleitung.md).
 
 Die Oberfläche führt dich in 13 Schritten durch das Deployment: Voraussetzungen prüfen und fehlende Module installieren, Tenant erfassen, App-Registrierung anlegen, Anmeldung prüfen, Persona-Gruppen benennen, Named Locations, Auswahl der Policies, Authentifizierungsmethoden und Passkeys, Breakglass-Konten, Offline-Prüfung und Probelauf, Ausrollen und Zurücknehmen. Zu jedem Schritt steht dabei, worum es geht, was der Deployer macht und was du vorher erledigen solltest. In der Seitenleiste siehst du, welche Schritte vollständig sind und wo noch etwas fehlt.
 
@@ -76,9 +80,11 @@ Gelöschte Gruppen, Benutzer und die AU liegen 30 Tage im Papierkorb. Mit `-Purg
 
 ```
 Deploy-CABaseline.ps1          Einstiegspunkt
+CA-Baseline-Deployer starten.cmd  startet die Weboberfläche per Doppelklick
 Start-CABaselineGui.ps1        startet die Weboberfläche
 Undo-CABaseline.ps1            nimmt ein Deployment anhand seines Protokolls zurück
 DISCLAIMER.md                  Haftungsausschluss
+docs/Testanleitung.md          Anleitung zum Testen nur mit der Weboberfläche
 config/
   tenant.example.json          Vorlage für eine Tenant-Config
   tenants/                     deine Tenant-Configs, nur lokal (.gitignore)

@@ -119,6 +119,7 @@ $scripts = @{
     deploy  = Join-Path $repoRoot 'Deploy-CABaseline.ps1'
     undo    = Join-Path $repoRoot 'Undo-CABaseline.ps1'
     app     = Join-Path $repoRoot 'tools/New-DeployerApp.ps1'
+    removeapp = Join-Path $repoRoot 'tools/Remove-DeployerApp.ps1'
     check   = Join-Path $repoRoot 'tools/Test-CAConnection.ps1'
     catalog = Join-Path $repoRoot 'tools/Update-AaguidCatalog.ps1'
     prereq  = Join-Path $repoRoot 'tools/Install-CAPrerequisites.ps1'
@@ -263,11 +264,15 @@ function Start-CAJob([hashtable]$Req) {
             $a.TenantId = $cfg.tenant.tenantId
             if ($Req.assignUsers) { $a.AssignUsers = @($Req.assignUsers) }
         }
+        'removeapp' {
+            $cfg = Read-CAJson $a.ConfigPath
+            $a = [ordered]@{ TenantId = $cfg.tenant.tenantId; Delete = $true; Confirm = $false }
+        }
     }
 
     $id = [guid]::NewGuid().ToString('n').Substring(0, 12)
     $pwsh = (Get-Process -Id $PID).Path
-    $argv = @('-NoProfile', '-NoLogo', '-File', (Join-Path $repoRoot 'gui/Invoke-CAJob.ps1'), '-Script', $scripts[$type], '-ArgsJson', (ConvertTo-Json -InputObject $a -Compress -Depth 5))
+    $argv = @('-NoProfile', '-NoLogo', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $repoRoot 'gui/Invoke-CAJob.ps1'), '-Script', $scripts[$type], '-ArgsJson', (ConvertTo-Json -InputObject $a -Compress -Depth 5))
     $job = [CABaselineGui.Job]::new($id, $type, $pwsh, [string[]]$argv, $repoRoot)
     $jobs[$id] = $job
     Write-Host ("[{0:HH:mm:ss}] Auftrag {1} gestartet ({2})" -f (Get-Date), $type, $id) -ForegroundColor Cyan
