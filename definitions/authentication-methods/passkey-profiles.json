@@ -1,0 +1,40 @@
+{
+  "_hinweis": "Ein Tenant kann höchstens drei Passkey-Profile haben, das Standardprofil mitgezählt. Der Deployer legt fehlende Profile an, vorhandene mit gleichem Namen lässt er unverändert.",
+  "profiles": [
+    {
+      "_deployer": {
+        "key": "Privileged",
+        "aaguidProducts": [
+          "WindowsHelloHardwareAuthenticator",
+          "WindowsHelloVBSHardwareAuthenticator",
+          "WindowsHelloSoftwareAuthenticator",
+          "MicrosoftAuthenticator"
+        ],
+        "optionalProducts": "YubiKey",
+        "hinweis": "Bekommen alle Personas aus authenticationMethods.passkeyPersonas, für die passkeyProfileByPersona nichts anderes vorsieht. Admins immer. Nur gerätegebundene Passkeys mit Attestierung. Erlaubt sind die AAGUIDs aus aaguidProducts plus die YubiKey-Produkte, die in der Config unter authenticationMethods.passkeyHardwareProducts stehen oder beim Deployment ausgewählt werden."
+      },
+      "name": "Privileged User Accounts",
+      "passkeyTypes": "deviceBound",
+      "attestationEnforcement": "registrationOnly",
+      "keyRestrictions": {
+        "isEnforced": true,
+        "enforcementType": "allow",
+        "aaGuids": []
+      }
+    },
+    {
+      "_deployer": {
+        "key": "NonPrivileged",
+        "hinweis": "Zugewiesen nur an Personas, für die authenticationMethods.passkeyProfileByPersona dieses Profil vorsieht. Ohne solche Zuordnung wird es angelegt, bekommt aber keine Gruppe."
+      },
+      "name": "Non-Privileged User Accounts",
+      "passkeyTypes": "deviceBound,synced",
+      "attestationEnforcement": "disabled",
+      "keyRestrictions": {
+        "isEnforced": false,
+        "enforcementType": "allow",
+        "aaGuids": []
+      }
+    }
+  ]
+}

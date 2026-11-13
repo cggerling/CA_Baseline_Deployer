@@ -1,0 +1,593 @@
+{
+  "_hinweis": "Erzeugt mit tools/Update-AaguidCatalog.ps1. Änderungen von Hand gehen beim nächsten Lauf verloren.",
+  "generated": "2026-11-13",
+  "mdsNextUpdate": "2026-12-01",
+  "products": [
+    {
+      "key": "YubiKey5SerieswithNFCKVZR57",
+      "name": "YubiKey 5 Series with NFC KVZR57",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "9eb7eabc-9db5-49a1-b6c3-555a802093f4",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioMultiprotocolEditionConsumerProfile1VDJSN2",
+      "name": "YubiKey Bio Multi-protocol Edition (Consumer Profile) 1VDJSN-2",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "9806a2c8-c0da-478e-b4ca-620005d34182",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithLightningConsumerProfile",
+      "name": "YubiKey 5 Series with Lightning (Consumer Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "03012cb7-4fb2-42e7-9e8d-a81f10e2a5e9",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithNFCEnhancedPINConsumerProfile",
+      "name": "YubiKey 5 Series with NFC Enhanced PIN (Consumer Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "0ebd9f2c-f685-441c-8c3e-a02a234a840a",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithNFCConsumerProfile",
+      "name": "YubiKey 5 Series with NFC (Consumer Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "f4ce5fc0-57d3-46f5-a736-efb7d5bc63b5",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithNFCEnhancedPIN",
+      "name": "YubiKey 5 Series with NFC - Enhanced PIN",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "662ef48a-95e2-4aaa-a6c1-5b9c40375824",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioSeriesMultiprotocolEdition1VDJSN",
+      "name": "YubiKey Bio Series - Multi-protocol Edition 1VDJSN",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "58276709-bb4b-4bb3-baf1-60eea99282a7",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED_L2"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioMultiprotocolEditionConsumerProfile",
+      "name": "YubiKey Bio Multi-protocol Edition (Consumer Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "ba0a9266-40d8-4048-9786-d710b5474752",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5CCNSerieswithNFCEnterpriseProfile",
+      "name": "YubiKey 5 CCN Series with NFC (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "3ec9c8d3-a5a7-415b-a7b5-f1d606368d3f",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "4fc84f16-2545-4e53-b8fc-7bf4d7282a10",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithNFCEnhancedPINEnterpriseProfile",
+      "name": "YubiKey 5 Series with NFC Enhanced PIN (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "9a3f2abd-a73d-439c-9ee7-1b53a857eaa7",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithNFCEnterpriseProfile",
+      "name": "YubiKey 5 Series with NFC (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "41e39911-c669-4811-b860-c6ad0b411b96",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "1ac71f64-468d-4fe0-bef1-0e5f2f551f18",
+          "firmware": "5.7.1",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "6ab56fad-881f-4a43-acb2-0be065924522",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioFidoEditionEnterpriseProfile",
+      "name": "YubiKey Bio Fido Edition (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "add92433-0d69-4026-8166-29b25bce64e9",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5FIPSSerieswithLightningEnterpriseProfile",
+      "name": "YubiKey 5 FIPS Series with Lightning (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "3a662962-c6d4-4023-bebb-98ae92e78e20",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "WindowsHelloSoftwareAuthenticator",
+      "name": "Windows Hello Software Authenticator",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "6028b017-b1d4-4c02-b4b3-afcdafc96bb2",
+          "firmware": "1",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5FIPSSeriesEnterpriseProfile",
+      "name": "YubiKey 5 FIPS Series (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "905b4cb4-ed6f-4da9-92fc-45e0d4e9b5c7",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5Series",
+      "name": "YubiKey 5 Series",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "19083c3d-8383-4b18-bc03-8f1c9ab2fd1b",
+          "firmware": "5.7.1",
+          "certification": "FIDO_CERTIFIED_L2"
+        },
+        {
+          "aaguid": "cb69481e-8ff7-4039-93ec-0a2729a154a8",
+          "firmware": "5.1.0",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "ee882879-721c-4913-9775-3dfcce97072a",
+          "firmware": "5.4.2",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "ff4dac45-ede8-4ec2-aced-cf66103f4335",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioSeriesFIDOEdition",
+      "name": "YubiKey Bio Series - FIDO Edition",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "d8522d9f-575b-4866-88a9-ba99fa02f35b",
+          "firmware": "5.5.5",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "dd86a2da-86a0-4cbe-b462-4bd31f57bc6f",
+          "firmware": "5.7.2",
+          "certification": "FIDO_CERTIFIED_L2"
+        },
+        {
+          "aaguid": "7409272d-1ff9-4e10-9fc9-ac0019c124fd",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "WindowsHelloVBSHardwareAuthenticator",
+      "name": "Windows Hello VBS Hardware Authenticator",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "9ddd1817-af5a-4672-a2b9-3e3dd95000a9",
+          "firmware": "1.90.42",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioSeriesMultiprotocolEditionEnterpriseProfile",
+      "name": "YubiKey Bio Series - Multi-protocol Edition (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "6ec5cff2-a0f9-4169-945b-f33b563f7b99",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "97e6a830-c952-4740-95fc-7c78dc97ce47",
+          "firmware": "5.7.2",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5FIPSSerieswithNFC",
+      "name": "YubiKey 5 FIPS Series with NFC",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "fcc0118f-cd45-435b-8da1-9782b2da0715",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "c1f9a0bc-1dd2-404a-b27f-8e29047a43fd",
+          "firmware": "5.4.2",
+          "certification": "FIDO_CERTIFIED_L2"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioSeriesMultiprotocolEdition",
+      "name": "YubiKey Bio Series - Multi-protocol Edition",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "90636e1f-ef82-43bf-bdcf-5255f139d12f",
+          "firmware": "5.7.2",
+          "certification": "FIDO_CERTIFIED_L2"
+        },
+        {
+          "aaguid": "34744913-4f57-4e6e-a527-e9ec3c4b94e6",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "7d1351a6-e097-4852-b8bf-c9ac5c9ce4a3",
+          "firmware": "5.6.6",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithLightning",
+      "name": "YubiKey 5 Series with Lightning",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "c5ef55ff-ad9a-4b9f-b580-adebafe026d0",
+          "firmware": "5.4.2",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "a02167b9-ae71-4ac7-9a07-06432ebb6f1c",
+          "firmware": "5.7.1",
+          "certification": "FIDO_CERTIFIED_L2"
+        },
+        {
+          "aaguid": "24673149-6c86-42e7-98d9-433fb5b73296",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithNFC",
+      "name": "YubiKey 5 Series with NFC",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "fa2b99dc-9e39-4257-8f92-4a30d23c4118",
+          "firmware": "5.1.0",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "2fc0579f-8113-47ea-b116-bb5a8db9202a",
+          "firmware": "5.4.2",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "d7781e5d-e353-46aa-afe2-3ca49f13332a",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "a25342c0-3cdc-4414-8e46-f4807fca511c",
+          "firmware": "5.7.1",
+          "certification": "FIDO_CERTIFIED_L2"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SeriesEnterpriseProfile",
+      "name": "YubiKey 5 Series (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "4599062e-6926-4fe7-9566-9e8fb1aedaa0",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "524de2de-982f-49b4-a769-2b5e3b73ad79",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "20ac7a17-c814-4833-93fe-539f0d5e3389",
+          "firmware": "5.7.1",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioSeriesFIDOEditionEnterpriseProfile",
+      "name": "YubiKey Bio Series - FIDO Edition (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "ad08c78a-4e41-49b9-86a2-ac15b06899e2",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "8c39ee86-7f9a-4a95-9ba3-f6b097e5c2ee",
+          "firmware": "5.7.2",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "83c47309-aabb-4108-8470-8be838b573cb",
+          "firmware": "5.5.5",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "WindowsHelloHardwareAuthenticator",
+      "name": "Windows Hello Hardware Authenticator",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "08987058-cadc-4b81-b6e1-30de50dcbe96",
+          "firmware": "1.90.42",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5FIPSSeries",
+      "name": "YubiKey 5 FIPS Series",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "73bb0cd4-e502-49b8-9c6f-b59445bf720b",
+          "firmware": "5.4.2",
+          "certification": "FIDO_CERTIFIED_L2"
+        },
+        {
+          "aaguid": "57f7de54-c807-4eab-b1c6-1c9be7984e92",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5CCNSerieswithNFC",
+      "name": "YubiKey 5 CCN Series with NFC",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "3aa78eb1-ddd8-46a8-a821-8f8ec57a7bd5",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioMultiprotocolEditionEnterpriseProfile",
+      "name": "YubiKey Bio Multi-protocol Edition (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "dc5e949d-f939-43b3-9877-a85c7186b753",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SeriesConsumerProfile",
+      "name": "YubiKey 5 Series (Consumer Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "0a357157-9b18-4c8a-920e-d156e972b2f8",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithNFCConsumerProfileKVZR572",
+      "name": "YubiKey 5 Series with NFC (Consumer Profile) KVZR57-2",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "7dab85a5-d16d-4eaf-a7ef-4c1385b151c5",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5CCNSerieswithNFCConsumerProfile",
+      "name": "YubiKey 5 CCN Series with NFC (Consumer Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "eb7ef748-cbe0-4b40-b8f6-07bd2d592d35",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5FIPSSerieswithNFCEnterpriseProfile",
+      "name": "YubiKey 5 FIPS Series with NFC (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "79f3c8ba-9e35-484b-8f47-53a5a0f5c630",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKeyBioFidoEditionConsumerProfile",
+      "name": "YubiKey Bio Fido Edition (Consumer Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "9dd8d593-2213-438a-97f8-d6b813d51c27",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithNFCEnhancedPINEnterpriseProfile",
+      "name": "YubiKey 5 Series with NFC - Enhanced PIN (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "b2c1a50b-dad8-4dc7-ba4d-0ce9597904bc",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5FIPSSerieswithLightning",
+      "name": "YubiKey 5 FIPS Series with Lightning",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "85203421-48f9-4355-9bc8-8a53846e5083",
+          "firmware": "5.4.2",
+          "certification": "FIDO_CERTIFIED_L2"
+        },
+        {
+          "aaguid": "7b96457d-e3cd-432b-9ceb-c9fdd7ef7432",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "YubiKey5SerieswithLightningEnterpriseProfile",
+      "name": "YubiKey 5 Series with Lightning (Enterprise Profile)",
+      "source": "FIDO MDS",
+      "aaguids": [
+        {
+          "aaguid": "b90e7dc1-316e-4fee-a25a-56a666a670fe",
+          "firmware": "5.7.1",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "3b24bf49-1d45-4484-a917-13175df0867b",
+          "firmware": "5.7.4",
+          "certification": "FIDO_CERTIFIED"
+        },
+        {
+          "aaguid": "c3479970-e58a-4f70-836f-853bf42fb063",
+          "firmware": "5.8.0",
+          "certification": "FIDO_CERTIFIED"
+        }
+      ]
+    },
+    {
+      "key": "MicrosoftAuthenticator",
+      "name": "Microsoft Authenticator",
+      "source": "Microsoft Learn: how-to-enable-authenticator-passkey",
+      "aaguids": [
+        {
+          "aaguid": "de1e552d-db1d-4423-a619-566b625cdc84",
+          "firmware": "Android",
+          "certification": ""
+        },
+        {
+          "aaguid": "90a3ccdf-635c-4729-a248-9b709135078f",
+          "firmware": "iOS",
+          "certification": ""
+        }
+      ]
+    }
+  ]
+}

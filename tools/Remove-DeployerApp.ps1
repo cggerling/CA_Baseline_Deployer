@@ -46,4 +46,4 @@ else {
         Write-Host '[OK] Anmeldung an der App deaktiviert' -ForegroundColor Green
     }
 }
-Disconnect-MgGraph | Out-Null
+Disconnect-MgGraph -ErrorAction SilentlyContinue -WarningAction SilentlyContinue *> $null

@@ -46,9 +46,12 @@ function Initialize-CAContext {
         ValidateOnly   = [bool]$ValidateOnly
         NonInteractive = [bool]$NonInteractive
         Groups         = @{}      # Persona-Schlüssel -> Objekt-ID
+        ExtraGroups    = @{}      # zusätzliche Personas, ohne Bezug zu Policies
         NamedLocations = @{}      # Name -> Objekt-ID
         AuthStrengths  = @{}      # Schlüssel -> Objekt-ID
-        Log            = [System.Collections.Generic.List[object]]::new()
+        OptionalProducts = @{}    # Auswahl optionaler Passkey-Hardware, damit nur einmal gefragt wird
+        SkippedNamedLocations = @{}  # abgewählte Locations, die es im Tenant nicht gibt
+        Log           = [System.Collections.Generic.List[object]]::new()
         LogPath        = $null    # gesetzt über Start-CALog, dann wird nach jedem Eintrag gespeichert
         FakeCounter    = 0
     }
@@ -202,6 +205,11 @@ function Get-CADefinitions {
         AuthStrengths   = @(Get-ChildItem (Join-Path $root 'authentication-strengths') -Filter *.json | Sort-Object Name | ForEach-Object { Read-CAJson $_.FullName })
         NamedLocations  = @(Get-ChildItem (Join-Path $root 'named-locations') -Filter *.json | Sort-Object Name | ForEach-Object { Read-CAJson $_.FullName })
         Policies        = @(Get-ChildItem (Join-Path $root 'conditional-access') -Filter *.json | Sort-Object Name | ForEach-Object { Read-CAJson $_.FullName })
+        PasskeyProfiles = @((Read-CAJson (Join-Path $root 'authentication-methods/passkey-profiles.json')).profiles)
+        AaguidCatalog   = $(
+            $catalogPath = Join-Path $root 'authentication-methods/aaguid-catalog.json'
+            if (Test-Path $catalogPath) { Read-CAJson $catalogPath } else { @{ products = @() } }
+        )
     }
 }
 
@@ -217,9 +225,25 @@ function Get-CAConfigValue([string]$PathExpr, $Default = $null) {
     $node
 }
 
-function Get-PersonaGroupName([string]$PersonaKey) {
-    $pattern = Get-CAConfigValue 'naming.groupNamePattern' 'SG-CA-Persona-{Persona}'
-    $pattern.Replace('{Persona}', $PersonaKey)
+# Gruppenname einer Persona. Reihenfolge:
+#   1. naming.groupNames.<Persona>   fester Name für genau diese Gruppe
+#   2. naming.groupNamePattern       Schema mit {Persona}, {persona} oder {PERSONA}
+# Für {Persona} gilt naming.personaLabels.<Persona>, falls gesetzt, sonst der Schlüssel.
+# Bei einer Sub-Persona steht die Bezeichnung der Hauptpersona davor, z. B. Internals-VIP.
+function Get-PersonaGroupName([string]$PersonaKey, [string]$ParentKey) {
+    $fixed = Get-CAConfigValue "naming.groupNames.$PersonaKey"
+    if ($fixed -and "$fixed".Trim()) { return "$fixed".Trim() }
+
+    $labelOf = {
+        param($k)
+        $l = Get-CAConfigValue "naming.personaLabels.$k"
+        if ($l -and "$l".Trim()) { "$l".Trim() } else { $k }
+    }
+    $label = & $labelOf $PersonaKey
+    if ($ParentKey) { $label = "$(& $labelOf $ParentKey)-$label" }
+
+    $pattern = "$(Get-CAConfigValue 'naming.groupNamePattern' 'SG-CA-Persona-{Persona}')".Trim()
+    $pattern.Replace('{Persona}', $label).Replace('{persona}', $label.ToLowerInvariant()).Replace('{PERSONA}', $label.ToUpperInvariant())
 }
 
 # Wählt die Policies nach include/exclude aus der Config (Platzhalter * erlaubt)
@@ -245,8 +269,11 @@ function Select-CAPolicies($Policies, [string[]]$OnlyKeys) {
 function Resolve-CAInput([System.Collections.IDictionary]$InputDef, [string]$Owner) {
     $name   = $InputDef.name
     $values = @(Get-CAConfigValue "inputs.$name" @())
+    # "-" in der Config heißt: bewusst leer. Dann wird nicht nachgefragt.
+    $confirmedEmpty = $values.Count -eq 1 -and "$($values[0])".Trim() -eq '-'
+    if ($confirmedEmpty) { $values = @() }
 
-    if ($values.Count -eq 0 -and $InputDef.required) {
+    if ($values.Count -eq 0 -and $InputDef.required -and -not $confirmedEmpty) {
         if ($script:Ctx.ValidateOnly) {
             Write-CALog 'Prüfung' $Owner 'warnung' "Kundeneingabe '$name' fehlt in der Config. Beim Deployment wird nachgefragt."
             $values = @('BEISPIEL')
@@ -315,13 +342,98 @@ function Resolve-CANode($Node, [hashtable]$Inputs, [string]$Owner) {
 # Schritt: Named Locations
 # ===========================================================================
 
+# Liest die IP-Bereiche, die Zscaler für eine Cloud empfiehlt (Hub-Präfixe). Quelle ist die
+# offizielle Konfigurationsseite des Herstellers. Gibt $null zurück, wenn der Abruf scheitert.
+$script:ZscalerClouds = @('zscaler.net', 'zscalerone.net', 'zscalertwo.net', 'zscalerthree.net', 'zscloud.net', 'zscalerbeta.net', 'zscalergov.net', 'zscalerten.net', 'zspreview.net')
+function Get-CAZscalerRanges([string]$Cloud) {
+    if ($script:ZscalerClouds -notcontains $Cloud) { throw "Unbekannte Zscaler-Cloud '$Cloud'." }
+    $url = "https://config.zscaler.com/api/$Cloud/hubs/cidr/json/recommended"
+    $r = Invoke-RestMethod -Uri $url -TimeoutSec 20
+    if ($r.cloudName -ne $Cloud -or -not @($r.hubPrefixes).Count) { throw "Antwort von $url hat nicht das erwartete Format." }
+    [pscustomobject]@{ Cloud = $Cloud; Url = $url; Ranges = @($r.hubPrefixes | ForEach-Object { "$_".Trim() } | Where-Object { $_ -match '^[0-9a-fA-F.:]+/\d{1,3}$' }) }
+}
+
+# Eigene Named Locations aus namedLocations.custom als Vorlagen im Graph-Format. Bei einer
+# Location mit Quelle Zscaler holt der Deployer die Bereiche bei jedem Lauf neu ab, damit
+# nie eine veraltete Liste im Tenant landet.
+function Get-CACustomNamedLocations($Definitions) {
+    $step = 'Named Locations'
+    $templateNames = @($Definitions | ForEach-Object { $_.displayName })
+    $seen = @{}
+    foreach ($c in @(Get-CAConfigValue 'namedLocations.custom' @())) {
+        if (-not $c) { continue }
+        $name = "$($c['name'])".Trim()
+        if (-not $name -or $name.Length -gt 256) { Write-CALog $step $name 'fehler' 'eigene Location übersprungen: Der Name ist leer oder länger als 256 Zeichen.'; continue }
+        if ($templateNames -contains $name -or $seen.ContainsKey($name.ToLowerInvariant())) { Write-CALog $step $name 'fehler' 'eigene Location übersprungen: Den Namen gibt es schon.'; continue }
+        $seen[$name.ToLowerInvariant()] = $true
+
+        if ($c['type'] -eq 'country') {
+            $countries = @($c['countriesAndRegions'] | Where-Object { $_ } | ForEach-Object { "$_".Trim().ToUpperInvariant() })
+            if (-not $countries.Count) { Write-CALog $step $name 'fehler' 'eigene Location übersprungen: keine Länder ausgewählt.'; continue }
+            [ordered]@{
+                _deployer = [ordered]@{ key = $name; custom = $true }
+                '@odata.type' = '#microsoft.graph.countryNamedLocation'
+                displayName = $name
+                countriesAndRegions = $countries
+                includeUnknownCountriesAndRegions = [bool]$c['includeUnknownCountriesAndRegions']
+                countryLookupMethod = 'clientIpAddress'
+            }
+            continue
+        }
+
+        $ranges = @($c['ipRanges'] | Where-Object { $_ } | ForEach-Object { "$_".Trim() })
+        $src = $c['source']
+        if ($src -and $src['vendor'] -eq 'zscaler' -and -not $script:Ctx.ValidateOnly) {
+            try {
+                $z = Get-CAZscalerRanges $src['cloud']
+                $added = @($z.Ranges | Where-Object { $ranges -notcontains $_ }).Count
+                $removed = @($ranges | Where-Object { $z.Ranges -notcontains $_ }).Count
+                if ($added -or $removed) { Write-CALog $step $name 'info' "Zscaler-Liste für $($src['cloud']) hat sich seit dem Import geändert ($added neu, $removed entfallen). Verwendet wird die aktuelle Liste." }
+                $ranges = $z.Ranges
+            }
+            catch { Write-CALog $step $name 'warnung' "Zscaler-Liste nicht abrufbar, verwendet wird der Stand aus dem Import: $($_.Exception.Message)" }
+        }
+        if (-not $ranges.Count) { Write-CALog $step $name 'fehler' 'eigene Location übersprungen: keine IP-Bereiche.'; continue }
+        [ordered]@{
+            _deployer = [ordered]@{ key = $name; custom = $true }
+            '@odata.type' = '#microsoft.graph.ipNamedLocation'
+            displayName = $name
+            isTrusted = [bool]$c['trusted']
+            ipRanges = @($ranges | ForEach-Object {
+                $type = if ($_ -match ':') { '#microsoft.graph.iPv6CidrRange' } else { '#microsoft.graph.iPv4CidrRange' }
+                [ordered]@{ '@odata.type' = $type; cidrAddress = $_ }
+            })
+        }
+    }
+}
+
 function Sync-CANamedLocations($Definitions) {
     $step = 'Named Locations'
     $existing = if ($script:Ctx.ValidateOnly) { @() } else { Invoke-CAGraph -Path '/identity/conditionalAccess/namedLocations' -All }
+    # Abgewählte Locations (namedLocations.skip) legt der Deployer nicht an. Gibt es sie schon im
+    # Tenant, verwenden die Policies die vorhandene. Sonst überspringt er die Policies, die sie brauchen.
+    $skip = @(Get-CAConfigValue 'namedLocations.skip' @())
 
-    foreach ($def in $Definitions) {
+    $all = [System.Collections.Generic.List[object]]::new()
+    foreach ($d in $Definitions) { $all.Add($d) }
+    foreach ($c in Get-CACustomNamedLocations $Definitions) { $all.Add($c) }
+
+    foreach ($def in $all) {
         $body = Resolve-CANode $def @{} $def.displayName
         $name = $body.displayName
+
+        if ($skip -contains $name) {
+            $current = $existing | Where-Object { $_.displayName -eq $name } | Select-Object -First 1
+            if ($current) {
+                $script:Ctx.NamedLocations[$name] = $current.id
+                Write-CALog $step $name 'unverändert' 'abgewählt, die vorhandene Location wird verwendet'
+            }
+            else {
+                $script:Ctx.SkippedNamedLocations[$name] = $true
+                Write-CALog $step $name 'übersprungen' 'abgewählt (namedLocations.skip). Policies, die sie brauchen, werden übersprungen.'
+            }
+            continue
+        }
 
         # Kundeneingaben aus der Config übernehmen. Ohne Eingabe bleibt der Platzhalter aus der Vorlage
         # stehen (192.0.2.1/32 bzw. DE), weil Graph keine leeren Locations annimmt.
@@ -435,50 +547,102 @@ function Sync-CAAuthStrengths($Definitions) {
 # Schritt: Persona-Gruppen
 # ===========================================================================
 
+# Legt eine Gruppe an oder findet sie über den Namen. Gibt die Objekt-ID zurück (im Prüf- und
+# Probelauf eine Test-ID), bei einem Fehler $null.
+function Sync-CAGroup([string]$Step, [string]$Key, [string]$Name, [string]$Description, [bool]$RoleAssignable, [string]$MembershipRule) {
+    if ($script:Ctx.ValidateOnly) { return New-FakeId $Name }
+
+    $current = @(Invoke-CAGraph -Path "/groups?`$filter=$(Get-CAEqFilter 'displayName' $Name)&`$select=id,displayName,isAssignableToRole,groupTypes,membershipRule" -All)
+    if ($current.Count -gt 1) { throw "Es gibt $($current.Count) Gruppen mit dem Namen '$Name'. Bitte im Tenant bereinigen." }
+    if ($current.Count -eq 1) {
+        $g = $current[0]
+        if ([bool]$g.isAssignableToRole -ne $RoleAssignable) {
+            Write-CALog $Step $Name 'warnung' "isAssignableToRole ist $([bool]$g.isAssignableToRole), gewählt war $RoleAssignable. Das lässt sich nachträglich nicht ändern."
+        }
+        elseif ($MembershipRule -and $g.membershipRule -ne $MembershipRule) {
+            Write-CALog $Step $Name 'warnung' "Dynamische Regel weicht ab: '$($g.membershipRule)'"
+        }
+        else { Write-CALog $Step $Name 'unverändert' }
+        return $g.id
+    }
+
+    # mailNickname: nur ASCII ohne Sonderzeichen, höchstens 64 Zeichen
+    $nick = $Name -replace '[^A-Za-z0-9\-_]', ''
+    if (-not $nick) { $nick = "CAPersona$Key" -replace '[^A-Za-z0-9\-_]', '' }
+    if ($nick.Length -gt 64) { $nick = $nick.Substring(0, 64) }
+    $body = [ordered]@{
+        displayName     = $Name
+        description     = $Description
+        mailEnabled     = $false
+        mailNickname    = $nick
+        securityEnabled = $true
+    }
+    # Nur das Flag. Eine Entra-Rolle wird diesen Gruppen nicht zugewiesen.
+    if ($RoleAssignable) { $body.isAssignableToRole = $true }
+    if ($MembershipRule) {
+        $body.groupTypes                    = @('DynamicMembership')
+        $body.membershipRule                = $MembershipRule
+        $body.membershipRuleProcessingState = 'On'
+    }
+
+    if ($script:Ctx.WhatIf) { Write-CALog $Step $Name 'würde anlegen'; return New-FakeId $Name }
+    try {
+        $new = Invoke-CAGraph -Method POST -Path '/groups' -Body $body
+        Write-CALog $Step $Name 'angelegt' $new.id -Kind Group -ObjectId $new.id
+        return $new.id
+    }
+    catch { Write-CALog $Step $Name 'fehler' (Get-CAErrorText $_); return $null }
+}
+
+# role-assignable: Vorgabe aus personas.json, in der Config unter personas.roleAssignable änderbar
+function Get-CARoleAssignable($Persona) {
+    $override = Get-CAConfigValue "personas.roleAssignable.$($Persona.key)"
+    if ($null -ne $override) { return [bool]$override }
+    [bool]$Persona.isAssignableToRole
+}
+
+# Prüft die zusätzlichen Personas aus personas.additional. Liefert nur gültige Einträge.
+# Regeln: eindeutiger Schlüssel, Sub-Personas hängen an genau einer Hauptpersona, und die
+# Hauptpersona ist selbst keine Sub-Persona (keine Ketten).
+function Get-CAAdditionalPersonas($Personas) {
+    $step = 'Persona-Gruppen'
+    $baseKeys = @($Personas | ForEach-Object { $_.key })
+    $list = @(Get-CAConfigValue 'personas.additional' @())
+    $mains = @($list | Where-Object { $_ -and -not $_['parent'] } | ForEach-Object { $_['key'] })
+    $seen = @{}
+    foreach ($e in $list) {
+        if (-not $e) { continue }
+        $key = "$($e['key'])".Trim()
+        $parent = if ($e['parent']) { "$($e['parent'])".Trim() } else { $null }
+        if ($key -notmatch '^[A-Za-z][A-Za-z0-9_]{0,39}$') { Write-CALog $step $key 'fehler' 'zusätzliche Persona übersprungen: Der Schlüssel darf nur Buchstaben, Ziffern und _ enthalten und muss mit einem Buchstaben beginnen.'; continue }
+        if ($baseKeys -contains $key -or $seen.ContainsKey($key.ToLowerInvariant())) { Write-CALog $step $key 'fehler' 'zusätzliche Persona übersprungen: Den Schlüssel gibt es schon.'; continue }
+        if ($parent -and -not ($baseKeys -contains $parent -or $mains -contains $parent)) { Write-CALog $step $key 'fehler' "zusätzliche Persona übersprungen: Die Hauptpersona '$parent' gibt es nicht oder sie ist selbst eine Sub-Persona."; continue }
+        $seen[$key.ToLowerInvariant()] = $true
+        [pscustomobject]@{
+            Key = $key; Parent = $parent
+            Description = if ($e['description']) { "$($e['description'])".Trim() } else { $null }
+            RoleAssignable = [bool]$e['roleAssignable']
+        }
+    }
+}
+
 function Sync-CAPersonaGroups($Personas) {
     $step = 'Persona-Gruppen'
     foreach ($p in $Personas) {
         $name = Get-PersonaGroupName $p.key
-        if ($script:Ctx.ValidateOnly) { $script:Ctx.Groups[$p.key] = New-FakeId $name; continue }
+        $id = Sync-CAGroup $step $p.key $name $p.description (Get-CARoleAssignable $p) $p.membershipRule
+        if ($id) { $script:Ctx.Groups[$p.key] = $id }
+    }
 
-        $current = @(Invoke-CAGraph -Path "/groups?`$filter=$(Get-CAEqFilter 'displayName' $name)&`$select=id,displayName,isAssignableToRole,groupTypes,membershipRule" -All)
-
-        if ($current.Count -gt 1) { throw "Es gibt $($current.Count) Gruppen mit dem Namen '$name'. Bitte im Tenant bereinigen." }
-        if ($current.Count -eq 1) {
-            $g = $current[0]
-            $script:Ctx.Groups[$p.key] = $g.id
-            if ([bool]$g.isAssignableToRole -ne [bool]$p.isAssignableToRole) {
-                Write-CALog $step $name 'warnung' "isAssignableToRole ist $($g.isAssignableToRole), erwartet $($p.isAssignableToRole). Das lässt sich nachträglich nicht ändern."
-            }
-            elseif ($p.membershipRule -and $g.membershipRule -ne $p.membershipRule) {
-                Write-CALog $step $name 'warnung' "Dynamische Regel weicht ab: '$($g.membershipRule)'"
-            }
-            else { Write-CALog $step $name 'unverändert' }
-            continue
-        }
-
-        $body = [ordered]@{
-            displayName     = $name
-            description     = $p.description
-            mailEnabled     = $false
-            mailNickname    = ($name -replace '[^A-Za-z0-9\-_]', '')
-            securityEnabled = $true
-        }
-        # Nur das Flag. Eine Entra-Rolle wird diesen Gruppen nicht zugewiesen.
-        if ($p.isAssignableToRole) { $body.isAssignableToRole = $true }
-        if ($p.membershipRule) {
-            $body.groupTypes                    = @('DynamicMembership')
-            $body.membershipRule                = $p.membershipRule
-            $body.membershipRuleProcessingState = 'On'
-        }
-
-        if ($script:Ctx.WhatIf) { $script:Ctx.Groups[$p.key] = New-FakeId $name; Write-CALog $step $name 'würde anlegen'; continue }
-        try {
-            $new = Invoke-CAGraph -Method POST -Path '/groups' -Body $body
-            $script:Ctx.Groups[$p.key] = $new.id
-            Write-CALog $step $name 'angelegt' $new.id -Kind Group -ObjectId $new.id
-        }
-        catch { Write-CALog $step $name 'fehler' (Get-CAErrorText $_) }
+    # Zusätzliche Personas sind reine Sicherheitsgruppen. Sie landen bewusst nicht in
+    # $script:Ctx.Groups, damit keine Policy und kein {{group:AllPersonas}} sie erfasst.
+    foreach ($x in Get-CAAdditionalPersonas $Personas) {
+        $name = Get-PersonaGroupName $x.Key $x.Parent
+        $desc = if ($x.Description) { $x.Description }
+                elseif ($x.Parent) { "CA Persona: Sub-Persona von $($x.Parent)" }
+                else { 'CA Persona: zusätzliche Persona' }
+        $id = Sync-CAGroup $step $x.Key $name $desc $x.RoleAssignable $null
+        if ($id) { $script:Ctx.ExtraGroups[$x.Key] = $id }
     }
 }
 
@@ -558,8 +722,17 @@ function Sync-CABreakglass($Definition) {
         Add-CAGroupMember $groupId $user[0].id $upn $step
     }
 
-    # Kennwörter nur einmal in der Konsole zeigen, nie ins Protokoll schreiben
-    if ($created.Count) {
+    # Kennwörter nur einmal zeigen, nie ins Protokoll schreiben. Unter der Weboberfläche gehen sie
+    # über eine eigene Zeile an den Browser, die der Server aus der normalen Ausgabe herausfiltert.
+    if ($created.Count -and $env:CABASELINE_GUI) {
+        foreach ($c in $created) {
+            [Console]::Out.WriteLine('##CABASELINE-SECRET## ' + ([ordered]@{ userPrincipalName = $c.UserPrincipalName; password = $c.Password } | ConvertTo-Json -Compress))
+        }
+        [Console]::Out.Flush()
+        Write-Host 'Kennwörter der neuen Breakglass-Konten werden einmalig in der Oberfläche angezeigt.' -ForegroundColor Red
+        Clear-Variable created
+    }
+    elseif ($created.Count) {
         Write-Host "`n================ BREAKGLASS-KENNWÖRTER ================" -ForegroundColor Red
         Write-Host 'Werden nur jetzt angezeigt und nirgends gespeichert. Sofort im Tresor ablegen.' -ForegroundColor Red
         $created | Format-Table -AutoSize | Out-Host
@@ -621,7 +794,7 @@ $script:CombinationToMethod = @{
     'windowsHelloForBusiness'     = 'WindowsHelloForBusiness'
 }
 
-function Sync-CAAuthMethods($Strengths) {
+function Sync-CAAuthMethods($Strengths, $PasskeyProfiles, $AaguidCatalog) {
     $step = 'Authentifizierungsmethoden'
 
     $needed = @{}
@@ -655,6 +828,11 @@ function Sync-CAAuthMethods($Strengths) {
         $targets = @(if ($method -eq 'Fido2') { $passkeyIds } else { $allPersonaIds })
         $label   = @{ Fido2 = 'Passkey (FIDO2)'; MicrosoftAuthenticator = 'Microsoft Authenticator'; TemporaryAccessPass = 'Temporary Access Pass' }[$method]
 
+        if ($method -eq 'Fido2') {
+            Sync-CAFido2 -Targets $targets -Label $label -Profiles (Resolve-CAPasskeyProfiles $PasskeyProfiles $AaguidCatalog)
+            continue
+        }
+
         if ($script:Ctx.ValidateOnly) { Write-CALog $step $label 'info' "Ziele: $($targets.Count) Gruppe(n)"; continue }
 
         $path = "/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/$method"
@@ -672,13 +850,7 @@ function Sync-CAAuthMethods($Strengths) {
         # nicht, auch keine Ziele. Er meldet nur, ob die Persona-Gruppen abgedeckt sind.
         if ($cfg.state -eq 'enabled') {
             $includeIds = @($include | ForEach-Object { $_.id })
-            if ($includeIds -contains 'all_users') {
-                if ($method -eq 'Fido2') {
-                    Write-CALog $step $label 'warnung' 'ist bereits für alle Benutzer aktiviert. Der Deployer ändert das nicht, das muss der Kunde entscheiden.'
-                }
-                else { Write-CALog $step $label 'unverändert' 'für alle Benutzer aktiviert' }
-                continue
-            }
+            if ($includeIds -contains 'all_users') { Write-CALog $step $label 'unverändert' 'für alle Benutzer aktiviert'; continue }
             $uncovered = @($targets | Where-Object { $includeIds -notcontains $_ })
             if ($uncovered.Count) {
                 Write-CALog $step $label 'warnung' "aktiviert, aber $($uncovered.Count) Persona-Gruppe(n) sind kein Ziel. Nicht geändert, weil die Methode schon aktiv ist. Bei Bedarf von Hand ergänzen."
@@ -697,10 +869,6 @@ function Sync-CAAuthMethods($Strengths) {
             if ($method -eq 'MicrosoftAuthenticator') {
                 $t['@odata.type'] = '#microsoft.graph.microsoftAuthenticatorAuthenticationMethodTarget'
                 $t.authenticationMode = 'any'
-            }
-            if ($method -eq 'Fido2' -and $cfg.ContainsKey('defaultPasskeyProfile') -and $cfg.defaultPasskeyProfile) {
-                $t['@odata.type'] = '#microsoft.graph.passkeyAuthenticationMethodTarget'
-                $t.allowedPasskeyProfiles = @($cfg.defaultPasskeyProfile)
             }
             $newTargets.Add($t)
         }
@@ -722,13 +890,257 @@ function Sync-CAAuthMethods($Strengths) {
     }
 }
 
+# ---------------------------------------------------------------------------
+# Passkey-Profile
+# ---------------------------------------------------------------------------
+
+# Optionale Hardware-Produkte (z. B. YubiKeys) für ein Profil. Steht die Liste in der Config
+# (authenticationMethods.passkeyHardwareProducts), gilt sie. Sonst fragt der Deployer einmal
+# nach und merkt sich die Antwort für den Rest des Laufs.
+function Select-CAOptionalProducts([string]$Pattern, [System.Collections.IDictionary]$Products) {
+    $step = 'Authentifizierungsmethoden'
+    $candidates = @($Products.Values | Where-Object { $_.name -like "*$Pattern*" } | Sort-Object name)
+    if (-not $candidates.Count) { return @() }
+
+    $configured = Get-CAConfigValue 'authenticationMethods.passkeyHardwareProducts'
+    if ($null -ne $configured) {
+        $keys = @($configured)
+        foreach ($k in @($keys | Where-Object { -not $Products.Contains($_) })) {
+            Write-CALog $step 'Passkey-Profile' 'warnung' "Produkt '$k' aus der Config steht nicht im AAGUID-Katalog"
+        }
+        return @($keys | Where-Object { $Products.Contains($_) })
+    }
+
+    if ($script:Ctx.OptionalProducts.Contains($Pattern)) { return $script:Ctx.OptionalProducts[$Pattern] }
+
+    $chosen = @()
+    if (-not ($script:Ctx.NonInteractive -or $script:Ctx.ValidateOnly)) {
+        Write-Host "`nWelche $Pattern-Produkte sollen im Profil für privilegierte Konten erlaubt sein?" -ForegroundColor Cyan
+        for ($i = 0; $i -lt $candidates.Count; $i++) {
+            $fw = ($candidates[$i].aaguids | ForEach-Object { $_.firmware }) -join ', '
+            Write-Host ('  {0,2}  {1}  (Firmware {2})' -f ($i + 1), $candidates[$i].name, $fw)
+        }
+        $answer = Read-Host 'Nummern mit Komma trennen, Enter oder - für keins'
+        $chosen = @(@(foreach ($n in @($answer -split '[,; ]+' | Where-Object { $_ -match '^\d+$' })) {
+            $idx = [int]$n - 1
+            if ($idx -ge 0 -and $idx -lt $candidates.Count) { $candidates[$idx].key }
+        }) | Select-Object -Unique)
+        $text = if ($chosen.Count) { $chosen -join ', ' } else { 'keins' }
+        Write-CALog $step 'Passkey-Profile' 'info' "$Pattern-Auswahl: $text. Für den nächsten Lauf unter authenticationMethods.passkeyHardwareProducts in die Config übernehmen."
+    }
+    $script:Ctx.OptionalProducts[$Pattern] = @($chosen)
+    @($chosen)
+}
+
+# Welche Persona welches Passkey-Profil bekommt. Personas aus authenticationMethods.passkeyPersonas,
+# das Profil je Persona aus authenticationMethods.passkeyProfileByPersona (Standard: Privileged).
+# Admins bekommen immer das Profil für privilegierte Konten.
+function Get-CAPasskeyPersonaProfiles {
+    $map = [ordered]@{}
+    foreach ($persona in @(Get-CAConfigValue 'authenticationMethods.passkeyPersonas' @('Admins'))) {
+        if (-not $persona) { continue }
+        $prof = Get-CAConfigValue "authenticationMethods.passkeyProfileByPersona.$persona" 'Privileged'
+        if ($persona -eq 'Admins') { $prof = 'Privileged' }
+        $map[$persona] = $prof
+    }
+    $map
+}
+
+# Macht aus den Profilvorlagen fertige Graph-Objekte: AAGUIDs aus dem Katalog, Personas aus der Config
+function Resolve-CAPasskeyProfiles($Profiles, $Catalog) {
+    $step = 'Authentifizierungsmethoden'
+    $products = [ordered]@{}
+    foreach ($p in @($Catalog.products)) { $products[$p.key] = $p }
+
+    foreach ($def in @($Profiles)) {
+        $meta = $def._deployer
+        $productKeys = [System.Collections.Generic.List[string]]::new()
+        foreach ($k in @($meta['aaguidProducts'])) { if ($k) { $productKeys.Add($k) } }
+        if ($meta['optionalProducts']) {
+            foreach ($k in Select-CAOptionalProducts $meta['optionalProducts'] $products) { $productKeys.Add($k) }
+        }
+
+        $aaguids = [System.Collections.Generic.List[string]]::new()
+        foreach ($k in $productKeys) {
+            if (-not $products.Contains($k)) { Write-CALog $step $def.name 'warnung' "Produkt '$k' steht nicht im AAGUID-Katalog"; continue }
+            foreach ($a in $products[$k].aaguids) { if (-not $aaguids.Contains($a.aaguid)) { $aaguids.Add($a.aaguid) } }
+        }
+
+        # Eine Positivliste ohne Einträge würde jeden Passkey sperren. Dann das Profil lieber weglassen.
+        if ($def.keyRestrictions.isEnforced -and $def.keyRestrictions.enforcementType -eq 'allow' -and $aaguids.Count -eq 0) {
+            Write-CALog $step $def.name 'warnung' 'nicht angelegt: Die Positivliste wäre leer und würde alle Passkeys sperren. AAGUID-Katalog mit tools/Update-AaguidCatalog.ps1 erzeugen.'
+            continue
+        }
+
+        $pmap = Get-CAPasskeyPersonaProfiles
+        $personas = @($pmap.Keys | Where-Object { $pmap[$_] -eq $meta.key })
+
+        [pscustomobject]@{
+            Key      = $meta.key
+            Name     = $def.name
+            Personas = @($personas | Where-Object { $_ })
+            Body     = [ordered]@{
+                name                   = $def.name
+                passkeyTypes           = $def.passkeyTypes
+                attestationEnforcement = $def.attestationEnforcement
+                keyRestrictions        = [ordered]@{
+                    isEnforced      = [bool]$def.keyRestrictions.isEnforced
+                    enforcementType = $def.keyRestrictions.enforcementType
+                    aaGuids         = $aaguids.ToArray()
+                }
+            }
+        }
+    }
+}
+
+# Passkey (FIDO2) mit Profilen. Regeln wie bei den anderen Methoden: Ist die Methode aktiv,
+# bleiben Status und Ziele unverändert. Fehlende Profile legt der Deployer trotzdem an, weil das
+# nichts an bestehenden Zuweisungen ändert. Ist sie deaktiviert, wird sie für die Persona-Gruppen
+# eingeschaltet, jeweils mit dem Profil, das für die Persona vorgesehen ist.
+function Sync-CAFido2([string[]]$Targets, [string]$Label, [object[]]$Profiles) {
+    $step = 'Authentifizierungsmethoden'
+    $maxProfiles = 3
+
+    if ($script:Ctx.ValidateOnly) {
+        foreach ($p in $Profiles) {
+            $who = if ($p.Personas.Count) { $p.Personas -join ', ' } else { 'keiner Gruppe zugewiesen' }
+            Write-CALog $step $p.Name 'info' "Passkey-Profil mit $($p.Body.keyRestrictions.aaGuids.Count) AAGUID(s), $who"
+        }
+        Write-CALog $step $Label 'info' "Ziele: $($Targets.Count) Gruppe(n)"
+        return
+    }
+
+    $path = '/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Fido2'
+    $cfg  = Invoke-CAGraph -Path $path
+    if (-not $cfg.ContainsKey('includeTargets')) { $cfg = Invoke-CAGraph -Path "$path`?`$expand=includeTargets" }
+    $include  = @($cfg.includeTargets)
+    $existing = @(if ($cfg.ContainsKey('passkeyProfiles')) { $cfg.passkeyProfiles })
+
+    foreach ($t in @($cfg.excludeTargets)) {
+        if ($Targets -contains $t.id) { Write-CALog $step $Label 'warnung' "Persona-Gruppe $($t.id) ist in der Methode ausgeschlossen. Das muss der Kunde selbst entscheiden." }
+    }
+
+    # Umstellung auf Profile: lässt sich laut Microsoft nicht zurücknehmen, deshalb nur nach Rückfrage
+    $useProfiles = $existing.Count -gt 0
+    $migrate = $false
+    if (-not $useProfiles -and $Profiles.Count) {
+        # authenticationMethods.migrateToPasskeyProfiles in der Config ersetzt die Rückfrage
+        $consent = Get-CAConfigValue 'authenticationMethods.migrateToPasskeyProfiles'
+        $answer  = if ($null -ne $consent) { if ($consent) { 'j' } else { 'n' } }
+                   else { Read-CAInput 'Der Tenant ist noch nicht auf Passkey-Profile umgestellt. Jetzt umstellen? Das lässt sich nicht zurücknehmen. (j/N)' }
+        if ($answer -match '^(j|ja|y|yes)$') { $migrate = $true; $useProfiles = $true }
+        else { Write-CALog $step 'Passkey-Profile' 'warnung' 'nicht angelegt, weil der Tenant nicht auf Passkey-Profile umgestellt ist. Umstellen im Portal unter Passkey (FIDO2) oder beim nächsten Lauf bestätigen.' }
+    }
+
+    $profileIds  = @{}
+    $newProfiles = [System.Collections.Generic.List[object]]::new()
+    if ($useProfiles) {
+        $free = $maxProfiles - $existing.Count
+        foreach ($p in $Profiles) {
+            $hit = $existing | Where-Object { $_.name -eq $p.Name } | Select-Object -First 1
+            if ($hit) {
+                $profileIds[$p.Key] = $hit.id
+                $want = @($p.Body.keyRestrictions.aaGuids | Sort-Object)
+                $have = @($hit.keyRestrictions.aaGuids | Sort-Object)
+                if (Compare-Object $want $have) { Write-CALog $step $p.Name 'warnung' 'Passkey-Profil existiert mit anderen AAGUIDs. Nicht geändert, bei Bedarf von Hand anpassen.' }
+                else { Write-CALog $step $p.Name 'unverändert' 'Passkey-Profil vorhanden' }
+                continue
+            }
+            if ($free -le 0) { Write-CALog $step $p.Name 'warnung' "nicht angelegt, der Tenant hat schon $maxProfiles Passkey-Profile"; continue }
+            $body = [ordered]@{ id = [guid]::NewGuid().ToString() }
+            foreach ($k in $p.Body.Keys) { $body[$k] = $p.Body[$k] }
+            $newProfiles.Add($body)
+            $profileIds[$p.Key] = $body.id
+            $free--
+        }
+    }
+    $defaultProfile = if ($cfg.ContainsKey('defaultPasskeyProfile') -and $cfg.defaultPasskeyProfile) { $cfg.defaultPasskeyProfile } else { '00000000-0000-0000-0000-000000000001' }
+
+    # Für jede Persona-Gruppe die Profile, die laut Vorlage für ihre Persona gedacht sind
+    $personaOf = @{}
+    foreach ($k in $script:Ctx.Groups.Keys) { $personaOf[$script:Ctx.Groups[$k]] = $k }
+    $profilesFor = {
+        param($gid)
+        @($Profiles | Where-Object { $_.Personas -contains $personaOf[$gid] -and $profileIds.ContainsKey($_.Key) } | ForEach-Object { $profileIds[$_.Key] })
+    }
+
+    $body = [ordered]@{ '@odata.type' = $cfg['@odata.type'] }
+    $changes = [System.Collections.Generic.List[string]]::new()
+    if ($newProfiles.Count) {
+        $body.passkeyProfiles = @($existing) + $newProfiles.ToArray()
+        $changes.Add('Passkey-Profile angelegt: ' + (($newProfiles | ForEach-Object { $_.name }) -join ', '))
+    }
+
+    if ($cfg.state -eq 'enabled') {
+        $includeIds = @($include | ForEach-Object { $_.id })
+        if ($includeIds -contains 'all_users') {
+            Write-CALog $step $Label 'warnung' 'ist bereits für alle Benutzer aktiviert. Der Deployer ändert das nicht, das muss der Kunde entscheiden.'
+        }
+        else {
+            $uncovered = @($Targets | Where-Object { $includeIds -notcontains $_ })
+            if ($uncovered.Count) { Write-CALog $step $Label 'warnung' "aktiviert, aber $($uncovered.Count) Persona-Gruppe(n) sind kein Ziel. Nicht geändert, weil die Methode schon aktiv ist. Bei Bedarf von Hand ergänzen." }
+            else { Write-CALog $step $Label 'unverändert' 'aktiviert, Persona-Gruppen abgedeckt' }
+        }
+        foreach ($t in @($include | Where-Object { $Targets -contains $_.id })) {
+            $wanted  = @(& $profilesFor $t.id)
+            $missing = @($wanted | Where-Object { @($t.allowedPasskeyProfiles) -notcontains $_ })
+            if ($missing.Count) {
+                Write-CALog $step $Label 'warnung' "Persona $($personaOf[$t.id]) ist Ziel, aber ohne das vorgesehene Passkey-Profil. Nicht geändert, weil die Methode schon aktiv ist. Profil im Portal unter Enable and Target zuweisen."
+            }
+        }
+    }
+    else {
+        $newTargets = foreach ($gid in $Targets) {
+            $t = [ordered]@{ targetType = 'group'; id = $gid; isRegistrationRequired = $false }
+            if ($useProfiles) {
+                $allowed = @(& $profilesFor $gid)
+                if (-not $allowed.Count) { $allowed = @($defaultProfile) }
+                $t['@odata.type'] = '#microsoft.graph.passkeyAuthenticationMethodTarget'
+                $t.allowedPasskeyProfiles = @($allowed)
+            }
+            $t
+        }
+        $body.state = 'enabled'
+        $body.includeTargets = @($newTargets)
+        $changes.Add("war deaktiviert, jetzt aktiv für $(@($Targets).Count) Persona-Gruppe(n)")
+    }
+
+    if (-not $changes.Count) { return }
+    $detail = $changes -join '; '
+    if ($script:Ctx.WhatIf) {
+        if ($migrate) { $detail = "Umstellung auf Passkey-Profile; $detail" }
+        Write-CALog $step $Label 'würde ändern' $detail
+        return
+    }
+
+    $before = [ordered]@{ '@odata.type' = $cfg['@odata.type']; state = $cfg.state; includeTargets = @($include) }
+    if ($existing.Count) { $before.passkeyProfiles = @($existing) }
+    try {
+        Invoke-CAGraph -Method PATCH -Path $path -Body $body | Out-Null
+        Write-CALog $step $Label 'aktualisiert' $detail -Kind AuthMethod -ObjectId 'Fido2' -Before $before
+        if ($migrate) { Write-CALog $step $Label 'info' 'Tenant auf Passkey-Profile umgestellt. Das bleibt auch nach einem Undo so.' }
+    }
+    catch { Write-CALog $step $Label 'fehler' (Get-CAErrorText $_) }
+}
+
 # ===========================================================================
 # Schritt: Service Principals der referenzierten Microsoft-Apps
 # ===========================================================================
 
+# App-ID und Zweck. Fehlt der Service Principal, scheitert die Registrierung von Passkeys in
+# Microsoft Authenticator.
+$script:RequiredServicePrincipals = [ordered]@{
+    '6aa00308-ea33-4caa-90d6-ae905d8cb51b' = 'der Registrierung von Passkeys im Authenticator'
+}
+
 function Sync-CAServicePrincipals($Policies) {
     $step = 'Service Principals'
     $appIds = @{}
+    # Apps, die der Tenant unabhängig von den ausgewählten Policies braucht
+    foreach ($fixed in $script:RequiredServicePrincipals.GetEnumerator()) {
+        $appIds[$fixed.Key] = [System.Collections.Generic.List[string]]::new()
+        $appIds[$fixed.Key].Add($fixed.Value)
+    }
     foreach ($p in $Policies) {
         $apps = $p.conditions.applications
         if (-not $apps) { continue }
@@ -780,6 +1192,12 @@ function Sync-CAPolicies($Policies) {
             $inputs[$def.name] = $value
         }
         if ($skip) { Write-CALog $step $key 'übersprungen' 'Kundeneingabe fehlt'; continue }
+
+        # Verweist die Policy auf eine abgewählte Named Location, wird sie übersprungen
+        $json = ConvertTo-Json -InputObject $p -Depth 30 -Compress
+        $missingNl = @([regex]::Matches($json, '\{\{namedLocation:([^}]+)\}\}') | ForEach-Object { $_.Groups[1].Value } |
+            Where-Object { $script:Ctx.SkippedNamedLocations.Contains($_) } | Select-Object -Unique)
+        if ($missingNl.Count) { Write-CALog $step $key 'übersprungen' "braucht die abgewählte Named Location $($missingNl -join ', ')"; continue }
 
         try { $body = Resolve-CANode $p $inputs $key }
         catch { Write-CALog $step $key 'fehler' $_.Exception.Message; continue }
@@ -923,6 +1341,8 @@ function Invoke-CAUndo([object[]]$Plan, [switch]$Purge) {
                 'zurücksetzen' {
                     if ($p.Kind -eq 'AuthMethod') {
                         $body = [ordered]@{ '@odata.type' = $p.Before.'@odata.type'; state = $p.Before.state; includeTargets = @($p.Before.includeTargets) }
+                        # Passkey-Profile, die der Lauf angelegt hat, verschwinden mit der alten Liste wieder
+                        if ($p.Before.PSObject.Properties['passkeyProfiles']) { $body.passkeyProfiles = @($p.Before.passkeyProfiles) }
                         Invoke-CAGraph -Method PATCH -Path "/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/$($p.Id)" -Body $body | Out-Null
                     }
                     else {
@@ -959,4 +1379,4 @@ function Invoke-CAUndo([object[]]$Plan, [switch]$Purge) {
 Export-ModuleMember -Function Connect-CABaseline, Get-CAUndoPlan, Invoke-CAUndo, Initialize-CAContext, Get-CAContext, Write-CALog, Save-CALog, Start-CALog, Get-CADefinitions,
     Get-CAConfigValue, Select-CAPolicies, Sync-CANamedLocations, Sync-CAAuthStrengths, Sync-CAPersonaGroups,
     Sync-CABreakglass, Sync-CARestrictedAU, Sync-CAAuthMethods, Sync-CAServicePrincipals, Sync-CAPolicies,
-    Read-CAJson, Get-CARequiredScopes
+    Read-CAJson, Get-CARequiredScopes, Get-CAZscalerRanges

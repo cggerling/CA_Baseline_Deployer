@@ -1,13 +1,25 @@
 {
-  "_hinweis": "Vorlage für eine Kunden-Config. Kopieren nach config/tenants/<kunde>.json und anpassen. Der Ordner config/tenants ist per .gitignore vom Repo ausgeschlossen. Bleibt breakglassAccounts leer, fragt der Deployer nach vorhandenen Konten und legt sonst zwei neue an (emergency_access_01 und _02 auf der onmicrosoft.com-Domäne).",
+  "_hinweis": "Vorlage für eine Kunden-Config. Kopieren nach config/tenants/<kunde>.json und anpassen. Der Ordner config/tenants ist per .gitignore vom Repo ausgeschlossen. Bleibt breakglassAccounts leer, fragt der Deployer nach vorhandenen Konten und legt sonst zwei neue an (emergency_access_01 und _02 auf der onmicrosoft.com-Domäne). Steht passkeyHardwareProducts auf null, fragt der Deployer, welche YubiKey-Produkte das Passkey-Profil für privilegierte Konten erlauben soll. Eine Liste mit Produktschlüsseln aus definitions/authentication-methods/aaguid-catalog.json übernimmt die Auswahl ohne Rückfrage, [] heißt keins. passkeyProfileByPersona ordnet einer Persona das Profil Privileged oder NonPrivileged zu, Standard ist Privileged. Admins bekommen immer Privileged.",
   "tenant": {
     "tenantId": "00000000-0000-0000-0000-000000000000",
     "primaryDomain": "contoso.onmicrosoft.com",
     "deployerAppClientId": "00000000-0000-0000-0000-000000000000"
   },
   "naming": {
+    "_hinweis": "groupNamePattern kennt {Persona}, {persona} (klein) und {PERSONA} (groß). personaLabels ersetzt den Schlüssel im Schema, z. B. \"Admins\": \"Administratoren\". Unter groupNames lässt sich je Persona ein fester Name setzen, der das Schema übergeht.",
     "groupNamePattern": "SG-CA-Persona-{Persona}",
+    "personaLabels": {},
     "administrativeUnitName": "AU-CA-Persona-Restricted"
+  },
+  "personas": {
+    "_hinweis": "roleAssignable überschreibt je Persona die Vorgabe aus groups/personas.json, z. B. \"Developers\": false. Das Flag lässt sich an einer bestehenden Gruppe nicht mehr ändern. Unter additional stehen zusätzliche Personas: {\"key\": \"VIP\", \"parent\": \"Internals\", \"roleAssignable\": false}. Dafür legt der Deployer nur eine Sicherheitsgruppe an, ohne Zuordnung zu CA-Policies. Mit parent wird sie zur Sub-Persona genau einer Haupt-Persona, ohne parent ist sie selbst eine Haupt-Persona.",
+    "roleAssignable": {},
+    "additional": []
+  },
+  "namedLocations": {
+    "_hinweis": "Namen in skip legt der Deployer nicht an. Policies, die eine davon brauchen, überspringt er, solange es die Location nicht schon im Tenant gibt. Unter custom stehen eigene Locations: {\"name\": \"NL-Global-Partner_VPN-IP\", \"type\": \"ip\", \"ipRanges\": [\"203.0.113.0/24\"], \"trusted\": false} oder mit \"type\": \"country\" und countriesAndRegions. Einträge mit \"source\": {\"vendor\": \"zscaler\", \"cloud\": \"zscaler.net\"} holt der Deployer bei jedem Lauf neu bei Zscaler ab.",
+    "skip": [],
+    "custom": []
   },
   "breakglassAccounts": [],
   "policies": {
@@ -39,6 +51,8 @@
     "passkeyPersonas": [
       "Admins"
     ],
+    "passkeyProfileByPersona": {},
+    "passkeyHardwareProducts": null,
     "deployFullPolicy": false
   }
 }

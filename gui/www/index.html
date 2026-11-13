@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CA Baseline Deployer</title>
+  <link rel="stylesheet" href="app.css">
+  <script src="validate.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">CA Baseline Deployer</div>
+    <div class="top-right">
+      <span id="cfg-label" class="muted"></span>
+      <span id="save-state" class="muted"></span>
+      <button id="btn-quit" class="ghost" type="button">Beenden</button>
+    </div>
+  </header>
+  <div class="layout">
+    <nav id="steps" aria-label="Schritte"></nav>
+    <main id="main"></main>
+  </div>
+  <div id="modal-root"></div>
+</body>
+</html>

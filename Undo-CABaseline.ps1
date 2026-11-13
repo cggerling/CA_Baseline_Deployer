@@ -30,10 +30,10 @@
     Ohne Rückfrage ausführen.
 
 .EXAMPLE
-    .\Undo-CABaseline.ps1 -ConfigPath .\config\tenants\cdx-test.json -LogPath .\Logs\M365x42039049.onmicrosoft.com-20261111-235043.json -WhatIf
+    .\Undo-CABaseline.ps1 -ConfigPath .\config\tenants\contoso.json -LogPath .\Logs\contoso.onmicrosoft.com-20260101-120000.json -WhatIf
 
 .EXAMPLE
-    .\Undo-CABaseline.ps1 -ConfigPath .\config\tenants\cdx-test.json -LogPath (Get-ChildItem .\Logs\M365x42039049*.json) -Purge
+    .\Undo-CABaseline.ps1 -ConfigPath .\config\tenants\contoso.json -LogPath (Get-ChildItem .\Logs\contoso*.json) -Purge
 #>
 
 #Requires -Version 7.2
@@ -82,6 +82,6 @@ finally {
     Write-Host "`n=== Zusammenfassung ===" -ForegroundColor White
     $log | Group-Object Action | Sort-Object Name | ForEach-Object { '{0,-14} {1}' -f $_.Name, $_.Count } | Out-Host
     $problems = @($log | Where-Object Action -in 'warnung', 'fehler')
-    if ($problems) { $problems | Format-Table Object, Action, Detail -AutoSize -Wrap | Out-Host }
+    if ($problems -and -not $env:CABASELINE_GUI) { $problems | Format-Table Object, Action, Detail -AutoSize -Wrap | Out-Host }
     Write-Host "Protokoll: $undoLog"
 }

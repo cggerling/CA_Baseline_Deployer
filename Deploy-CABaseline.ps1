@@ -71,7 +71,9 @@ $run      = { param($name) -not $Steps -or $Steps -contains $name }
 
 # Das Protokoll wird ab hier nach jedem Eintrag gespeichert, nicht erst am Ende.
 $tenantLabel = (Get-CAConfigValue 'tenant.primaryDomain' 'tenant') -replace '[^\w\.-]', '_'
-$logPath = Join-Path $repoRoot ("Logs/{0}-{1:yyyyMMdd-HHmmss}.json" -f $tenantLabel, (Get-Date))
+# Prüf- und Probeläufe ändern nichts. Das Suffix hält sie aus der Auswahl für die Rücknahme heraus.
+$suffix = if ($ValidateOnly) { '-validate' } elseif ($WhatIfPreference) { '-whatif' } else { '' }
+$logPath = Join-Path $repoRoot ("Logs/{0}-{1:yyyyMMdd-HHmmss}{2}.json" -f $tenantLabel, (Get-Date), $suffix)
 Start-CALog $logPath
 
 if (-not $ValidateOnly) { Connect-CABaseline }
@@ -99,7 +101,7 @@ try {
     Invoke-Step 'Groups'            { Sync-CAPersonaGroups $defs.Personas } -AlwaysResolve
     Invoke-Step 'Breakglass'        { Sync-CABreakglass $defs.Breakglass }
     Invoke-Step 'AdminUnit'         { Sync-CARestrictedAU $defs.AdminUnit $defs.Personas }
-    Invoke-Step 'AuthMethods'       { Sync-CAAuthMethods $defs.AuthStrengths }
+    Invoke-Step 'AuthMethods'       { Sync-CAAuthMethods $defs.AuthStrengths $defs.PasskeyProfiles $defs.AaguidCatalog }
     Invoke-Step 'ServicePrincipals' { Sync-CAServicePrincipals $policies }
     Invoke-Step 'Policies'          { Sync-CAPolicies $policies }
 }
@@ -110,7 +112,8 @@ finally {
     Write-Host "`n=== Zusammenfassung ===" -ForegroundColor White
     $log | Group-Object Action | Sort-Object Name | ForEach-Object { '{0,-14} {1}' -f $_.Name, $_.Count } | Out-Host
     $problems = @($log | Where-Object Action -in 'warnung', 'fehler')
-    if ($problems) {
+    # Unter der Weboberfläche baut die Oberfläche die Übersicht selbst aus dem Protokoll
+    if ($problems -and -not $env:CABASELINE_GUI) {
         Write-Host 'Warnungen und Fehler:' -ForegroundColor Yellow
         $problems | Format-Table Step, Object, Action, Detail -AutoSize -Wrap | Out-Host
     }
