@@ -10,7 +10,7 @@
         "required": true,
         "render": "deviceFilterOrClause",
         "attribute": "device.enrollmentProfileName",
-        "hint": "Namen der Autopilot-Enrollment-Profile des Kunden. Geräte aus diesen Profilen werden von Token Protection ausgenommen, wie im Learn-Artikel beschrieben. Der Deployer hängt daraus \"-or (device.enrollmentProfileName -eq \"\"...\"\" -or ...)\" an den Gerätefilter an. Eine leere Liste muss bewusst bestätigt werden."
+        "hint": "Namen deiner Autopilot-Enrollment-Profile. Geräte aus diesen Profilen werden von Token Protection ausgenommen, wie im Learn-Artikel beschrieben. Der Deployer hängt daraus \"-or (device.enrollmentProfileName -eq \"\"...\"\" -or ...)\" an den Gerätefilter an. Eine leere Liste muss bewusst bestätigt werden."
       }
     ]
   },

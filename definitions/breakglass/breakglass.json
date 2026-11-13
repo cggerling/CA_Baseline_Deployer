@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Notfallkonten. Der Deployer fragt zuerst, ob der Kunde schon Breakglass-Konten hat (breakglassAccounts in der Tenant-Config). Wenn nicht, legt er die hier beschriebenen Konten auf der onmicrosoft.com-Domäne an und nimmt sie in die Persona-Gruppe Breakglass auf. Eine Entra-Rolle weist er nicht zu, die Breakglass-Policies kommen in einer späteren Version.",
+  "_hinweis": "Notfallkonten. Der Deployer fragt zuerst, ob du schon Breakglass-Konten hast (breakglassAccounts in der Tenant-Config). Wenn nicht, legt er die hier beschriebenen Konten auf der onmicrosoft.com-Domäne an und nimmt sie in die Persona-Gruppe Breakglass auf. Eine Entra-Rolle weist er nicht zu, die Breakglass-Policies kommen in einer späteren Version.",
   "count": 2,
   "userPrincipalNamePattern": "emergency_access_{Nr}@{InitialDomain}",
   "displayNamePattern": "Emergency Access {Nr}",

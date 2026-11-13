@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Legt im Kundentenant die App-Registrierung "CA Baseline Deployer" an.
+    Legt in deinem Tenant die App-Registrierung "CA Baseline Deployer" an.
 
 .DESCRIPTION
     Die App ist ein öffentlicher Client ohne Secret und ohne Zertifikat. Sie bekommt
@@ -14,10 +14,10 @@
     die vorhandene, ergänzt fehlende Zuweisungen und trägt die Client-ID ein.
 
     Am Ende steht die Client-ID in der Konsole. Mit -ConfigPath wird sie direkt in die
-    Kunden-Config geschrieben.
+    Tenant-Config geschrieben.
 
 .PARAMETER TenantId
-    Tenant-ID des Kunden.
+    ID deines Tenants.
 
 .PARAMETER DisplayName
     Name der App-Registrierung.
@@ -26,7 +26,7 @@
     Weitere UPNs, die sich an der App anmelden dürfen.
 
 .PARAMETER ConfigPath
-    Kunden-Config, in die tenant.deployerAppClientId geschrieben wird.
+    Tenant-Config, in die tenant.deployerAppClientId geschrieben wird.
 
 .EXAMPLE
     .\tools\New-DeployerApp.ps1 -TenantId 11111111-2222-3333-4444-555555555555 -ConfigPath .\config\tenants\contoso.json

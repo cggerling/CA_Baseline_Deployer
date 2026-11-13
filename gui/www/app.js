@@ -373,14 +373,15 @@ const STEPS = [
     render() {
       return [
         h('h1', {}, 'Conditional Access Framework ausrollen'),
-        h('p', {}, 'Dieser Assistent begleitet dich durch das Deployment des kompletten Conditional-Access-Frameworks in einen Entra-ID-Tenant. Dazu gehören die Persona-Gruppen, Named Locations, Authentifizierungsstärken, Passkey-Profile, Breakglass-Konten und die CA-Policies selbst. Jeder Schritt erklärt, was passiert und was vorher erledigt sein muss.'),
+        h('p', {}, 'Mit diesem Assistenten bekommst du einen guten Startpunkt für Conditional Access in deinem Entra-ID-Tenant. Er rollt eine Sammlung von Einstellungen aus, die ein solides Fundament für deine weitere Arbeit mit Conditional Access bilden: Persona-Gruppen, Named Locations, Authentifizierungsstärken, Passkey-Profile, Breakglass-Konten und die CA-Policies selbst. Jeder Schritt erklärt dir, was passiert und was du vorher erledigen solltest.'),
+        h('p', {}, 'Fertig ist dein Conditional Access damit nicht. Die Policies starten im Modus „Nur Bericht“, und welche Ausnahmen, Länder und Netze zu deiner Umgebung passen, entscheidest du danach selbst.'),
         explain(
           ['Persona-Gruppen, Named Locations, Authentifizierungsstärken, Passkey-Profile, Breakglass-Konten und CA-Policies', 'Neue Policies starten im Modus „Nur Bericht“'],
           ['Gleicht jeden Schritt mit dem Tenant ab und legt nichts doppelt an', 'Schreibt ein Protokoll, mit dem sich alles zurücknehmen lässt'],
           ['Erst in einem Testtenant ausprobieren', 'Funktionierende Notfallkonten einplanen', 'Den Haftungsausschluss lesen']),
         h('div', { class: 'card' },
           h('h2', {}, 'Haftungsausschluss'),
-          h('p', {}, 'Die Nutzung erfolgt auf eigene Verantwortung. CA-Policies greifen direkt in die Anmeldung aller Benutzer ein, und eine falsch konfigurierte Policy kann Administratoren und Benutzer aussperren. Vor dem Einsatz in einem produktiven Tenant gehört ein Durchlauf in einem Testtenant dazu. Der vollständige Text steht in DISCLAIMER.md im Repository.'),
+          h('p', {}, 'Du nutzt das Tool auf eigene Verantwortung. CA-Policies greifen direkt in die Anmeldung aller Benutzer ein, und eine falsch konfigurierte Policy kann Administratoren und Benutzer aussperren. Probier das Deployment deshalb zuerst in einem Testtenant aus, bevor du es produktiv einsetzt. Den vollständigen Text findest du in DISCLAIMER.md im Repository.'),
           checkbox('Ich habe den Haftungsausschluss gelesen und übernehme die Verantwortung für den Einsatz.',
             disclaimerOk(),
             v => { try { sessionStorage.setItem('caDisclaimer', v ? '1' : '0'); } catch { } S.disclaimer = v; render(); }),

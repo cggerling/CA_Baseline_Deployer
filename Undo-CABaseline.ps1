@@ -17,7 +17,7 @@
     Gelöscht wird nur, was im Protokoll steht. Vorher zeigt das Skript die Liste und fragt nach.
 
 .PARAMETER ConfigPath
-    Kunden-Config des Tenants, in dem das Deployment lief.
+    Config des Tenants, in dem das Deployment lief.
 
 .PARAMETER LogPath
     Ein oder mehrere Protokolle (z. B. bei mehreren abgebrochenen Läufen).

@@ -7,7 +7,7 @@
         "type": "cidrList",
         "required": false,
         "placeholder": "192.0.2.1/32",
-        "hint": "IP-Bereiche des Kunden. 192.0.2.1/32 stammt aus dem Dokumentationsbereich TEST-NET-1 (RFC 5737) und ist nie im Internet geroutet. Er steht nur drin, weil Graph keine leere IP-Location annimmt. Der Deployer warnt, solange der Platzhalter verwendet wird."
+        "hint": "Deine öffentlichen IP-Bereiche. 192.0.2.1/32 stammt aus dem Dokumentationsbereich TEST-NET-1 (RFC 5737) und ist nie im Internet geroutet. Er steht nur drin, weil Graph keine leere IP-Location annimmt. Der Deployer warnt, solange der Platzhalter verwendet wird."
       }
     ]
   },

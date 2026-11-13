@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Prüft Anmeldung, aktive Rollen und Sicherheitsstandards im Kundentenant, ohne etwas zu ändern.
+    Prüft Anmeldung, aktive Rollen und Sicherheitsstandards in deinem Tenant, ohne etwas zu ändern.
 
 .DESCRIPTION
     Meldet sich mit der Deployer-App aus der Config an und liest:

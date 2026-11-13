@@ -265,7 +265,7 @@ function Select-CAPolicies($Policies, [string[]]$OnlyKeys) {
 # Platzhalter
 # ===========================================================================
 
-# Löst eine Kundeneingabe auf. Gibt $null zurück, wenn die Policy übersprungen werden soll.
+# Löst eine tenantspezifische Eingabe auf. Gibt $null zurück, wenn die Policy übersprungen werden soll.
 function Resolve-CAInput([System.Collections.IDictionary]$InputDef, [string]$Owner) {
     $name   = $InputDef.name
     $values = @(Get-CAConfigValue "inputs.$name" @())
@@ -275,11 +275,11 @@ function Resolve-CAInput([System.Collections.IDictionary]$InputDef, [string]$Own
 
     if ($values.Count -eq 0 -and $InputDef.required -and -not $confirmedEmpty) {
         if ($script:Ctx.ValidateOnly) {
-            Write-CALog 'Prüfung' $Owner 'warnung' "Kundeneingabe '$name' fehlt in der Config. Beim Deployment wird nachgefragt."
+            Write-CALog 'Prüfung' $Owner 'warnung' "Eingabe '$name' fehlt in der Config. Beim Deployment wird nachgefragt."
             $values = @('BEISPIEL')
         }
         else {
-            Write-Host "`n$Owner braucht die Kundeneingabe '$name':" -ForegroundColor Yellow
+            Write-Host "`n$Owner braucht die Eingabe '$name':" -ForegroundColor Yellow
             Write-Host "  $($InputDef.hint)"
             $answer = Read-CAInput 'Werte kommagetrennt eingeben, "-" für bewusst leer, Enter zum Überspringen der Policy'
             if ([string]::IsNullOrWhiteSpace($answer)) { return $null }
@@ -435,7 +435,7 @@ function Sync-CANamedLocations($Definitions) {
             continue
         }
 
-        # Kundeneingaben aus der Config übernehmen. Ohne Eingabe bleibt der Platzhalter aus der Vorlage
+        # Tenantspezifische Eingaben aus der Config übernehmen. Ohne Eingabe bleibt der Platzhalter aus der Vorlage
         # stehen (192.0.2.1/32 bzw. DE), weil Graph keine leeren Locations annimmt.
         $override = Get-CAConfigValue "inputs.namedLocations.$name"
         $provided = @()
@@ -772,7 +772,7 @@ function Sync-CARestrictedAU($Definition, $Personas) {
     else { Write-CALog $step $name 'unverändert' }
 
     # Die AU bleibt leer. Liegen die Gruppen erst in der AU, können tenant-weite Admins ihre
-    # Mitglieder nicht mehr pflegen. Deshalb nimmt der Kunde sie selbst auf, sobald die
+    # Mitglieder nicht mehr pflegen. Deshalb nimmst du sie selbst auf, sobald die
     # Mitglieder stehen.
     $intended = ($protected | ForEach-Object { Get-PersonaGroupName $_.key }) -join ', '
     Write-CALog $step $name 'info' "bleibt leer. Später aufnehmen: $intended"
@@ -843,10 +843,10 @@ function Sync-CAAuthMethods($Strengths, $PasskeyProfiles, $AaguidCatalog) {
         $exclude = @($cfg.excludeTargets)
 
         foreach ($t in $exclude) {
-            if ($targets -contains $t.id) { Write-CALog $step $label 'warnung' "Persona-Gruppe $($t.id) ist in der Methode ausgeschlossen. Das muss der Kunde selbst entscheiden." }
+            if ($targets -contains $t.id) { Write-CALog $step $label 'warnung' "Persona-Gruppe $($t.id) ist in der Methode ausgeschlossen. Das entscheidest du selbst." }
         }
 
-        # Eine aktivierte Methode hat der Kunde bewusst konfiguriert. Der Deployer ändert sie
+        # Eine aktivierte Methode hast du bewusst konfiguriert. Der Deployer ändert sie
         # nicht, auch keine Ziele. Er meldet nur, ob die Persona-Gruppen abgedeckt sind.
         if ($cfg.state -eq 'enabled') {
             $includeIds = @($include | ForEach-Object { $_.id })
@@ -1017,7 +1017,7 @@ function Sync-CAFido2([string[]]$Targets, [string]$Label, [object[]]$Profiles) {
     $existing = @(if ($cfg.ContainsKey('passkeyProfiles')) { $cfg.passkeyProfiles })
 
     foreach ($t in @($cfg.excludeTargets)) {
-        if ($Targets -contains $t.id) { Write-CALog $step $Label 'warnung' "Persona-Gruppe $($t.id) ist in der Methode ausgeschlossen. Das muss der Kunde selbst entscheiden." }
+        if ($Targets -contains $t.id) { Write-CALog $step $Label 'warnung' "Persona-Gruppe $($t.id) ist in der Methode ausgeschlossen. Das entscheidest du selbst." }
     }
 
     # Umstellung auf Profile: lässt sich laut Microsoft nicht zurücknehmen, deshalb nur nach Rückfrage
@@ -1074,7 +1074,7 @@ function Sync-CAFido2([string[]]$Targets, [string]$Label, [object[]]$Profiles) {
     if ($cfg.state -eq 'enabled') {
         $includeIds = @($include | ForEach-Object { $_.id })
         if ($includeIds -contains 'all_users') {
-            Write-CALog $step $Label 'warnung' 'ist bereits für alle Benutzer aktiviert. Der Deployer ändert das nicht, das muss der Kunde entscheiden.'
+            Write-CALog $step $Label 'warnung' 'ist bereits für alle Benutzer aktiviert. Der Deployer ändert das nicht, das entscheidest du.'
         }
         else {
             $uncovered = @($Targets | Where-Object { $includeIds -notcontains $_ })
@@ -1182,7 +1182,7 @@ function Sync-CAPolicies($Policies) {
     foreach ($p in $Policies) {
         $key = $p._deployer.key
 
-        # Kundeneingaben auflösen. Fehlt eine Pflichtangabe, wird die Policy übersprungen.
+        # Tenantspezifische Eingaben auflösen. Fehlt eine Pflichtangabe, wird die Policy übersprungen.
         $inputs = @{}
         $skip = $false
         foreach ($def in @($p._deployer.customerInput)) {
@@ -1191,7 +1191,7 @@ function Sync-CAPolicies($Policies) {
             if ($null -eq $value) { $skip = $true; break }
             $inputs[$def.name] = $value
         }
-        if ($skip) { Write-CALog $step $key 'übersprungen' 'Kundeneingabe fehlt'; continue }
+        if ($skip) { Write-CALog $step $key 'übersprungen' 'Eingabe fehlt'; continue }
 
         # Verweist die Policy auf eine abgewählte Named Location, wird sie übersprungen
         $json = ConvertTo-Json -InputObject $p -Depth 30 -Compress
@@ -1208,7 +1208,7 @@ function Sync-CAPolicies($Policies) {
         if ($script:Ctx.ValidateOnly) { Write-CALog $step $name 'info' 'Platzhalter aufgelöst'; continue }
 
         if ($current) {
-            # Der Status einer bestehenden Policy bleibt, wie der Kunde ihn gesetzt hat
+            # Der Status einer bestehenden Policy bleibt, wie du ihn gesetzt hast
             $body.Remove('state')
             if ($script:Ctx.WhatIf) { Write-CALog $step $name 'würde ändern' "Status bleibt $($current.state)"; continue }
             try {

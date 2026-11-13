@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Rollt das CA-Framework in einen Kundentenant aus.
+    Rollt das CA-Framework in deinen Tenant aus.
 
 .DESCRIPTION
     Reihenfolge:
@@ -8,7 +8,7 @@
       2. Authentifizierungsstärken
       3. Persona-Gruppen
       4. Breakglass-Konten (vorhandene übernehmen oder zwei neue anlegen) und Gruppenmitgliedschaft
-      5. Restricted Management AU (leer, die Gruppen nimmt der Kunde später selbst auf)
+      5. Restricted Management AU (leer, die Gruppen nimmst du später selbst auf)
       6. Authentifizierungsmethoden, die die Stärken brauchen (nur ergänzend)
       7. Service Principals der Microsoft-Apps, auf die Policies verweisen
       8. CA-Policies
@@ -21,7 +21,7 @@
     Breakglass-Konten stehen nur einmal in der Konsole und nie im Protokoll.
 
 .PARAMETER ConfigPath
-    Kunden-Config, z. B. config/tenants/contoso.json.
+    Tenant-Config, z. B. config/tenants/contoso.json.
 
 .PARAMETER ValidateOnly
     Prüft Vorlagen und Config ohne Anmeldung und ohne Graph-Aufruf.
